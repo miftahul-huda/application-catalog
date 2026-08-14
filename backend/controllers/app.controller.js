@@ -117,7 +117,7 @@ const updateApp = async (req, res) => {
 
 const addDeveloper = async (req, res) => {
   try {
-    const { applicationId } = req.params;
+    const applicationId = req.params.id;
     const dev = await ApplicationDeveloper.create({
       ...req.body,
       applicationId
