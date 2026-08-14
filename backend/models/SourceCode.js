@@ -1,7 +1,7 @@
 const { DataTypes, Op } = require('sequelize');
 const sequelize = require('../config/database');
 
-const Deployment = sequelize.define('Deployment', {
+const SourceCode = sequelize.define('SourceCode', {
   id: {
     type: DataTypes.STRING,
     primaryKey: true
@@ -11,30 +11,21 @@ const Deployment = sequelize.define('Deployment', {
     allowNull: false
   },
   url: {
-    type: DataTypes.STRING
+    type: DataTypes.STRING,
+    allowNull: false
   },
-  instructions: {
+  description: {
     type: DataTypes.TEXT
-  },
-  testingInstructions: {
-    type: DataTypes.TEXT
-  },
-  platform: {
-    type: DataTypes.ENUM('VM', 'Managed VM Group', 'Kubernetes', 'Docker Swarm', 'Cloud Run', 'App Engine')
-  },
-  envVars: {
-    type: DataTypes.JSONB,
-    defaultValue: []
   }
 }, {
   hooks: {
-    beforeCreate: async (deployment, options) => {
-      if (!deployment.id) {
+    beforeCreate: async (sourceCode) => {
+      if (!sourceCode.id) {
         const today = new Date();
         const dateStr = today.toISOString().slice(0, 10).replace(/-/g, '');
-        const prefix = `DEPL-${deployment.applicationId}-${dateStr}`;
+        const prefix = `SRC-${sourceCode.applicationId}-${dateStr}`;
         
-        const lastDepl = await Deployment.findOne({
+        const last = await SourceCode.findOne({
           where: {
             id: {
               [Op.like]: `${prefix}-%`
@@ -44,15 +35,15 @@ const Deployment = sequelize.define('Deployment', {
         });
         
         let nextNumber = 1;
-        if (lastDepl) {
-          const parts = lastDepl.id.split('-');
+        if (last) {
+          const parts = last.id.split('-');
           const lastNum = parseInt(parts[parts.length - 1]);
           if (!isNaN(lastNum)) nextNumber = lastNum + 1;
         }
-        deployment.id = `${prefix}-${nextNumber.toString().padStart(3, '0')}`;
+        sourceCode.id = `${prefix}-${nextNumber.toString().padStart(3, '0')}`;
       }
     }
   }
 });
 
-module.exports = Deployment;
+module.exports = SourceCode;

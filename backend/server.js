@@ -24,6 +24,16 @@ app.use('/api/deployments', require('./routes/deployment.routes'));
 app.use('/api/master', require('./routes/master.routes'));
 app.use('/api/users', require('./routes/user.routes'));
 app.use('/api/assets', require('./routes/asset.routes'));
+app.use('/api/source-codes', require('./routes/source-code.routes'));
+app.use('/api/bug-histories', require('./routes/bug-history.routes'));
+
+
+
+app.get('/api/config', (req, res) => {
+  res.json({
+    googleClientId: process.env.GOOGLE_CLIENT_ID
+  });
+});
 
 app.get('/', (req, res) => res.json({ message: 'Application Catalog API' }));
 

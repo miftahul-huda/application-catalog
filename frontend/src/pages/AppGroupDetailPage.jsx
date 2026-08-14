@@ -1,11 +1,12 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Plus, ArrowLeft, Copy, Search, Filter, ExternalLink, Clock, Tag, FileText, Link2, LayoutGrid, FileSearch } from 'lucide-react';
+import { Plus, ArrowLeft, Copy, Search, ExternalLink, Clock, Tag, FileText, Link2, LayoutGrid, FileSearch, Edit2, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../services/api';
 import { useUI } from '../contexts/UIContext';
 import AppFormModal from '../components/AppFormModal';
 import AppGroupFormModal from '../components/AppGroupFormModal';
+import DocumentFormModal from '../components/DocumentFormModal';
 
 const CATEGORY_COLORS = {
   'Web Application': 'badge-info',
@@ -36,6 +37,7 @@ export default function AppGroupDetailPage() {
   const [funcFilter, setFuncFilter] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [showGroupForm, setShowGroupForm] = useState(false);
+  const [showDocModal, setShowDocModal] = useState(false);
   const [editApp, setEditApp] = useState(null);
   const [projects, setProjects] = useState([]);
   const { confirm, toast } = useUI();
@@ -80,6 +82,18 @@ export default function AppGroupDetailPage() {
         load();
       } catch { toast('Duplikasi gagal', 'error'); }
     }, 'primary');
+  };
+
+  const handleDeleteDocument = (index, docTitle) => {
+    confirm('Hapus Dokumen', `Yakin ingin menghapus dokumen "${docTitle || 'ini'}"?`, async () => {
+      try {
+        await api.delete(`/app-groups/${id}/documents/${index}`);
+        toast('Dokumen berhasil dihapus', 'success');
+        load();
+      } catch {
+        toast('Gagal menghapus dokumen', 'error');
+      }
+    }, 'danger');
   };
 
   if (loading) return <div className="loading-overlay"><div className="spinner" /></div>;
@@ -137,11 +151,12 @@ export default function AppGroupDetailPage() {
           exit={{ opacity: 0, x: -10 }}
           transition={{ duration: 0.2 }}
         >
+
           {activeTab === 'Applications' && (
             <>
               {/* Filters */}
               <div className="filter-bar">
-                <div className="search-bar" style={{ flex:1, minWidth:200 }}>
+                <div className="search-bar" style={{ flex: 1, minWidth: 200 }}>
                   <Search size={16} />
                   <input
                     className="search-input"
@@ -150,11 +165,11 @@ export default function AppGroupDetailPage() {
                     onChange={e => setSearch(e.target.value)}
                   />
                 </div>
-                <select className="form-select" style={{ width:180 }} value={catFilter} onChange={e => setCatFilter(e.target.value)}>
+                <select className="form-select" style={{ width: 180 }} value={catFilter} onChange={e => setCatFilter(e.target.value)}>
                   <option value="">Semua Kategori</option>
                   {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
-                <select className="form-select" style={{ width:180 }} value={funcFilter} onChange={e => setFuncFilter(e.target.value)}>
+                <select className="form-select" style={{ width: 180 }} value={funcFilter} onChange={e => setFuncFilter(e.target.value)}>
                   <option value="">Semua Fungsi</option>
                   {functions.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
                 </select>
@@ -163,121 +178,217 @@ export default function AppGroupDetailPage() {
                 )}
               </div>
 
-              {/* App Cards */}
+              {/* App Table */}
               {filtered.length === 0 ? (
                 <div className="empty-state">
                   <div className="empty-state-icon">🖥️</div>
                   <div className="empty-state-title">Belum ada aplikasi</div>
                   <div className="empty-state-desc">Tambahkan aplikasi ke group ini.</div>
-                  <button className="btn btn-primary" onClick={() => setShowForm(true)}><Plus size={16}/> Tambah Aplikasi</button>
+                  <button className="btn btn-primary" onClick={() => { setEditApp(null); setShowForm(true); }}>
+                    <Plus size={16} /> Tambah Aplikasi
+                  </button>
                 </div>
               ) : (
-                <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(300px, 1fr))', gap:'var(--space-4)' }}>
-                  {filtered.map(app => (
-                    <div key={app.id} className="card">
-                      <div style={{ display:'flex', justifyContent:'space-between', marginBottom:'var(--space-3)' }}>
-                        <span className="badge badge-neutral" style={{ fontFamily:'var(--font-mono)', fontSize:'0.85rem' }}>{app.id}</span>
-                        <div style={{ display:'flex', gap:'var(--space-1)' }}>
-                          <button className="btn btn-ghost btn-icon btn-sm" title="Duplikasi" onClick={() => handleDuplicate(app.id)}><Copy size={13}/></button>
-                          <button className="btn btn-ghost btn-icon btn-sm" title="Edit" onClick={() => { setEditApp(app); setShowForm(true); }}>✏️</button>
-                        </div>
-                      </div>
-
-                      <Link to={`/apps/${app.id}`} style={{ textDecoration:'none', color:'inherit', display: 'flex', alignItems: 'center', gap: '12px', marginBottom:'var(--space-3)' }}>
-                        <div style={{ 
-                          width: 36, 
-                          height: 36, 
-                          borderRadius: '10px', 
-                          background: 'var(--bg-card)', 
-                          border: '1px solid var(--border-subtle)',
-                          display: 'flex', 
-                          alignItems: 'center', 
-                          justifyContent: 'center',
-                          fontSize: '1.2rem',
-                          flexShrink: 0,
-                          overflow: 'hidden'
-                        }}>
-                          {app.icon?.startsWith('http') ? (
-                            <img src={app.icon} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="icon" />
-                          ) : (
-                            app.icon || app.name[0].toUpperCase()
-                          )}
-                        </div>
-                        <h3 style={{ fontWeight:700, margin: 0, fontSize:'1rem' }}>{app.name}</h3>
-                      </Link>
-
-                      <div className="tag-list" style={{ marginBottom:'var(--space-3)' }}>
-                        {app.category && <span className={`badge ${CATEGORY_COLORS[app.category.name] || 'badge-neutral'}`}>{app.category.name}</span>}
-                        {app.function && <span className={`badge ${FUNCTION_COLORS[app.function.name] || 'badge-neutral'}`}>{app.function.name}</span>}
-                      </div>
-
-                      {app.description && (
-                        <p style={{ fontSize:'0.95rem', color:'var(--text-muted)', lineHeight:1.6, marginBottom:'var(--space-3)', overflow:'hidden', display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical' }}>
-                          {app.description}
-                        </p>
-                      )}
-
-                      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', paddingTop:'var(--space-3)', borderTop:'1px solid var(--border-subtle)' }}>
-                        <span style={{ fontSize:'0.9rem', color:'var(--text-muted)', display:'flex', alignItems:'center', gap:4 }}>
-                          <Clock size={12}/> {new Date(app.createdAt).toLocaleDateString('id-ID')}
-                        </span>
-                        <Link to={`/apps/${app.id}`} className="btn btn-ghost btn-sm" style={{ fontSize:'0.9rem' }}>
-                          Detail <ExternalLink size={12}/>
-                        </Link>
-                      </div>
-                    </div>
-                  ))}
+                <div className="table-wrapper">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>ID</th>
+                        <th>Aplikasi</th>
+                        <th>Kategori</th>
+                        <th>Fungsi</th>
+                        <th>Deskripsi</th>
+                        <th>URL</th>
+                        <th>Created</th>
+                        <th style={{ textAlign: 'right' }}>Aksi</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filtered.map(app => (
+                        <tr key={app.id}>
+                          <td style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', whiteSpace: 'nowrap' }}>
+                            {app.id}
+                          </td>
+                          <td style={{ whiteSpace: 'nowrap' }}>
+                            <Link
+                              to={`/apps/${app.id}`}
+                              style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none', color: 'inherit', fontWeight: 600 }}
+                            >
+                              <div style={{
+                                width: 28, height: 28, borderRadius: '6px',
+                                background: 'var(--bg-hover)',
+                                border: '1px solid var(--border-subtle)',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                fontSize: '0.9rem', fontWeight: 700, overflow: 'hidden',
+                                flexShrink: 0,
+                              }}>
+                                {app.icon?.startsWith('http') ? (
+                                  <img src={app.icon} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
+                                ) : (
+                                  app.icon || app.name[0].toUpperCase()
+                                )}
+                              </div>
+                              <span
+                                style={{ color: 'var(--text-primary)', transition: 'color 0.15s' }}
+                                onMouseEnter={e => e.currentTarget.style.color = 'var(--accent-primary)'}
+                                onMouseLeave={e => e.currentTarget.style.color = 'var(--text-primary)'}
+                              >
+                                {app.name}
+                              </span>
+                            </Link>
+                          </td>
+                          <td>
+                            {app.category && (
+                              <span className={`badge ${CATEGORY_COLORS[app.category.name] || 'badge-neutral'}`}>
+                                {app.category.name}
+                              </span>
+                            )}
+                          </td>
+                          <td>
+                            {app.function && (
+                              <span className={`badge ${FUNCTION_COLORS[app.function.name] || 'badge-neutral'}`}>
+                                {app.function.name}
+                              </span>
+                            )}
+                          </td>
+                          <td
+                            style={{ maxWidth: '240px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                            title={app.description}
+                          >
+                            {app.description || <span style={{ color: 'var(--text-muted)' }}>—</span>}
+                          </td>
+                          <td style={{ maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {app.url ? (
+                              <a
+                                href={app.url}
+                                target="_blank"
+                                rel="noreferrer"
+                                style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: 'var(--accent-primary)', textDecoration: 'none' }}
+                              >
+                                Link <ExternalLink size={12} />
+                              </a>
+                            ) : (
+                              <span style={{ color: 'var(--text-muted)' }}>—</span>
+                            )}
+                          </td>
+                          <td style={{ whiteSpace: 'nowrap', fontSize: '0.8rem' }}>
+                            {new Date(app.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                          </td>
+                          <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
+                            <div style={{ display: 'flex', gap: '4px', justifyContent: 'flex-end' }}>
+                              <button className="icon-btn" title="Duplikasi" onClick={() => handleDuplicate(app.id)}>
+                                <Copy size={13} />
+                              </button>
+                              <button className="icon-btn" title="Edit" onClick={() => { setEditApp(app); setShowForm(true); }}>
+                                <Edit2 size={13} />
+                              </button>
+                              <Link
+                                to={`/apps/${app.id}`}
+                                className="btn btn-ghost btn-sm"
+                                style={{ padding: '4px 8px', fontSize: '0.75rem' }}
+                              >
+                                Detail
+                              </Link>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               )}
             </>
           )}
 
           {activeTab === 'Documents' && (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(400px, 1fr))', gap: '1rem' }}>
-              {(group.documents || []).length === 0 ? (
-                <div className="card" style={{ gridColumn: '1/-1', textAlign: 'center', padding: '3rem' }}>
-                  <FileSearch size={48} color="var(--text-muted)" style={{ marginBottom: '1rem' }} />
-                  <div className="empty-state-title">No documents yet</div>
-                  <div className="empty-state-desc">Belum ada dokumen yang diunggah untuk group ini.</div>
+            <div>
+              <div className="section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+                <div>
+                  <h2 className="section-title" style={{ margin: 0 }}>Dokumen & Resources</h2>
+                  <p style={{ margin: '4px 0 0', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                    Daftar dokumen arsitektur, PRD, desain, atau tautan penting terkait group ini.
+                  </p>
                 </div>
-              ) : (
-                group.documents.map((doc, i) => (
-                  <div key={i} className="card shadow-hover" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
-                      <div style={{ width: 44, height: 44, borderRadius: '12px', background: 'var(--bg-hover)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        {doc.type === 'file' ? <FileText size={22} color="var(--accent-primary)" /> : <Link2 size={22} color="var(--accent-info)" />}
-                      </div>
-                      <div style={{ flex: 1 }}>
-                        <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 700 }}>{doc.title}</h4>
-                        <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                          {doc.type === 'file' ? 'Uploaded File' : 'External Resource'}
+                <button className="btn btn-primary btn-sm" onClick={() => setShowDocModal(true)}>
+                  <Plus size={14} /> Tambah Dokumen
+                </button>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(400px, 1fr))', gap: '1rem' }}>
+                {(group.documents || []).length === 0 ? (
+                  <div className="card" style={{ gridColumn: '1/-1', textAlign: 'center', padding: '3rem' }}>
+                    <FileSearch size={48} color="var(--text-muted)" style={{ marginBottom: '1rem' }} />
+                    <div className="empty-state-title">Belum ada dokumen</div>
+                    <div className="empty-state-desc" style={{ marginBottom: '1.5rem' }}>Belum ada dokumen yang ditambahkan untuk group ini.</div>
+                    <button className="btn btn-primary" onClick={() => setShowDocModal(true)}>
+                      <Plus size={16} /> Tambah Dokumen Pertama
+                    </button>
+                  </div>
+                ) : (
+                  group.documents.map((doc, i) => (
+                    <div key={i} className="card shadow-hover" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
+                        <div style={{ width: 44, height: 44, borderRadius: '12px', background: 'var(--bg-hover)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          {doc.type === 'file' ? <FileText size={22} color="var(--accent-primary)" /> : <Link2 size={22} color="var(--accent-info)" />}
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{doc.title}</h4>
+                          <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                            {doc.type === 'file' ? 'Uploaded File' : 'External Resource'}
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <a href={doc.url} target="_blank" rel="noreferrer" className="btn btn-ghost btn-icon btn-sm" title="Buka tautan">
+                            <ExternalLink size={16} />
+                          </a>
+                          <button
+                            className="btn btn-ghost btn-icon btn-sm"
+                            title="Hapus Dokumen"
+                            onClick={() => handleDeleteDocument(i, doc.title)}
+                            style={{ color: 'var(--accent-danger)' }}
+                          >
+                            <Trash2 size={16} />
+                          </button>
                         </div>
                       </div>
-                      <a href={doc.url} target="_blank" rel="noreferrer" className="btn btn-ghost btn-icon btn-sm">
-                        <ExternalLink size={16} />
-                      </a>
+                      {doc.description && (
+                        <p style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', lineHeight: 1.6, margin: 0, flex: 1 }}>
+                          {doc.description}
+                        </p>
+                      )}
+                      <div style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--border-subtle)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <Clock size={14} /> Link aktif
+                        </span>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <button
+                            className="btn btn-ghost btn-sm"
+                            style={{ color: 'var(--accent-danger)' }}
+                            onClick={() => handleDeleteDocument(i, doc.title)}
+                          >
+                            Hapus
+                          </button>
+                          <a href={doc.url} target="_blank" rel="noreferrer" className="btn btn-secondary btn-sm" style={{ padding: '6px 14px' }}>
+                            Buka {doc.type === 'file' ? 'Dokumen' : 'Tautan'}
+                          </a>
+                        </div>
+                      </div>
                     </div>
-                    {doc.description && (
-                      <p style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', lineHeight: 1.6, margin: 0, flex: 1 }}>
-                        {doc.description}
-                      </p>
-                    )}
-                    <div style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--border-subtle)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <Clock size={14} /> Link aktif
-                      </span>
-                      <a href={doc.url} target="_blank" rel="noreferrer" className="btn btn-secondary btn-sm" style={{ padding: '6px 14px' }}>
-                        Open {doc.type === 'file' ? 'Document' : 'Link'}
-                      </a>
-                    </div>
-                  </div>
-                ))
-              )}
+                  ))
+                )}
+              </div>
             </div>
           )}
         </motion.div>
       </AnimatePresence>
 
+
+      <style>{`
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(10px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
 
       {showForm && (
         <AppFormModal
@@ -296,6 +407,14 @@ export default function AppGroupDetailPage() {
           projects={projects}
           onClose={() => setShowGroupForm(false)}
           onSuccess={() => { setShowGroupForm(false); load(); }}
+        />
+      )}
+
+      {showDocModal && (
+        <DocumentFormModal
+          groupId={id}
+          onClose={() => setShowDocModal(false)}
+          onSuccess={() => { setShowDocModal(false); load(); }}
         />
       )}
     </div>

@@ -1,7 +1,7 @@
 const { DataTypes, Op } = require('sequelize');
 const sequelize = require('../config/database');
 
-const Deployment = sequelize.define('Deployment', {
+const BugHistory = sequelize.define('BugHistory', {
   id: {
     type: DataTypes.STRING,
     primaryKey: true
@@ -10,31 +10,39 @@ const Deployment = sequelize.define('Deployment', {
     type: DataTypes.STRING,
     allowNull: false
   },
-  url: {
+  title: {
     type: DataTypes.STRING
   },
-  instructions: {
-    type: DataTypes.TEXT
+  description: {
+    type: DataTypes.TEXT,
+    allowNull: false
   },
-  testingInstructions: {
-    type: DataTypes.TEXT
-  },
-  platform: {
-    type: DataTypes.ENUM('VM', 'Managed VM Group', 'Kubernetes', 'Docker Swarm', 'Cloud Run', 'App Engine')
-  },
-  envVars: {
+  screenshots: {
     type: DataTypes.JSONB,
     defaultValue: []
+  },
+  reportedBy: {
+    type: DataTypes.STRING
+  },
+  causesAndTroubleshoot: {
+    type: DataTypes.TEXT
+  },
+  status: {
+    type: DataTypes.ENUM('Open', 'Investigating', 'Resolved', 'Closed'),
+    defaultValue: 'Open'
+  },
+  createdBy: {
+    type: DataTypes.UUID
   }
 }, {
   hooks: {
-    beforeCreate: async (deployment, options) => {
-      if (!deployment.id) {
+    beforeCreate: async (bug) => {
+      if (!bug.id) {
         const today = new Date();
         const dateStr = today.toISOString().slice(0, 10).replace(/-/g, '');
-        const prefix = `DEPL-${deployment.applicationId}-${dateStr}`;
+        const prefix = `BUG-${bug.applicationId}-${dateStr}`;
         
-        const lastDepl = await Deployment.findOne({
+        const last = await BugHistory.findOne({
           where: {
             id: {
               [Op.like]: `${prefix}-%`
@@ -44,15 +52,15 @@ const Deployment = sequelize.define('Deployment', {
         });
         
         let nextNumber = 1;
-        if (lastDepl) {
-          const parts = lastDepl.id.split('-');
+        if (last) {
+          const parts = last.id.split('-');
           const lastNum = parseInt(parts[parts.length - 1]);
           if (!isNaN(lastNum)) nextNumber = lastNum + 1;
         }
-        deployment.id = `${prefix}-${nextNumber.toString().padStart(3, '0')}`;
+        bug.id = `${prefix}-${nextNumber.toString().padStart(3, '0')}`;
       }
     }
   }
 });
 
-module.exports = Deployment;
+module.exports = BugHistory;

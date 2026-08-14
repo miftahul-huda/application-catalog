@@ -9,4 +9,35 @@ router.post('/', protect, approvedOnly, createGroup);
 router.put('/:id', protect, approvedOnly, updateGroup);
 router.post('/:id/duplicate', protect, approvedOnly, duplicateGroup);
 
+// Add document to group
+router.post('/:id/documents', protect, approvedOnly, async (req, res) => {
+  try {
+    const { ApplicationGroup } = require('../models');
+    const group = await ApplicationGroup.findByPk(req.params.id);
+    if (!group) return res.status(404).json({ message: 'Group not found' });
+    const docs = [...(group.documents || []), req.body];
+    await group.update({ documents: docs });
+    res.status(201).json(group);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+});
+
+// Remove document from group by index
+router.delete('/:id/documents/:index', protect, approvedOnly, async (req, res) => {
+  try {
+    const { ApplicationGroup } = require('../models');
+    const group = await ApplicationGroup.findByPk(req.params.id);
+    if (!group) return res.status(404).json({ message: 'Group not found' });
+    const docs = [...(group.documents || [])];
+    const idx = parseInt(req.params.index);
+    if (isNaN(idx) || idx < 0 || idx >= docs.length) return res.status(400).json({ message: 'Invalid index' });
+    docs.splice(idx, 1);
+    await group.update({ documents: docs });
+    res.json(group);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 module.exports = router;

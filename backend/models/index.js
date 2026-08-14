@@ -11,6 +11,8 @@ const ApplicationDeveloper = require('./ApplicationDeveloper');
 const Backlog = require('./Backlog');
 const Deployment = require('./Deployment');
 const Asset = require('./Asset');
+const SourceCode = require('./SourceCode');
+const BugHistory = require('./BugHistory');
 
 // Associations
 
@@ -27,6 +29,8 @@ Application.belongsTo(User, { foreignKey: 'createdBy', as: 'creator' });
 Application.hasMany(ApplicationDeveloper, { foreignKey: 'applicationId', as: 'developers' });
 Application.hasMany(Backlog, { foreignKey: 'applicationId', as: 'backlogs' });
 Application.hasMany(Deployment, { foreignKey: 'applicationId', as: 'deployments' });
+Application.hasMany(SourceCode, { foreignKey: 'applicationId', as: 'sourceCodes' });
+Application.hasMany(BugHistory, { foreignKey: 'applicationId', as: 'bugHistories' });
 
 // ApplicationDeveloper
 ApplicationDeveloper.belongsTo(Application, { foreignKey: 'applicationId' });
@@ -41,6 +45,13 @@ Backlog.belongsTo(User, { foreignKey: 'createdBy', as: 'creator' });
 // Deployment
 Deployment.belongsTo(Application, { foreignKey: 'applicationId' });
 
+// SourceCode
+SourceCode.belongsTo(Application, { foreignKey: 'applicationId' });
+
+// BugHistory
+BugHistory.belongsTo(Application, { foreignKey: 'applicationId' });
+BugHistory.belongsTo(User, { foreignKey: 'createdBy', as: 'creator' });
+
 const models = {
   sequelize,
   User,
@@ -54,7 +65,11 @@ const models = {
   ApplicationDeveloper,
   Backlog,
   Deployment,
-  Asset
+  Asset,
+  SourceCode,
+  BugHistory
 };
 
 module.exports = models;
+
+

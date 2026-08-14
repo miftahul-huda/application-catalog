@@ -17,19 +17,42 @@ export const UIProvider = ({ children }) => {
     setModal(null);
   }, []);
 
-  // Modify confirm to return a Promise so it's awaitable
-  const confirm = useCallback((title, message, variant = 'danger') => {
+  // Support both await confirm(title, msg, variant) AND confirm(title, msg, callback, variant)
+  const confirm = useCallback((title, message, arg3, arg4) => {
+    let callback = null;
+    let variant = 'danger';
+
+    if (typeof arg3 === 'function') {
+      callback = arg3;
+      if (typeof arg4 === 'string') variant = arg4;
+    } else if (typeof arg3 === 'string') {
+      variant = arg3;
+    }
+
     return new Promise((resolve) => {
       setModal({
         type: 'confirm',
         title,
         message,
         variant,
-        onConfirm: () => resolve(true),
-        onCancel: () => resolve(false)
+        onConfirm: async () => {
+          if (callback) {
+            try {
+              await callback();
+            } catch (err) {
+              console.error(err);
+            }
+          }
+          resolve(true);
+          closeModal();
+        },
+        onCancel: () => {
+          resolve(false);
+          closeModal();
+        }
       });
     });
-  }, []);
+  }, [closeModal]);
 
   // For toast, we might have multiple arguments
   const toast = useCallback((message, type = 'info', duration = 3500) => {

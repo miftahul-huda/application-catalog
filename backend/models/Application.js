@@ -32,6 +32,10 @@ const Application = sequelize.define('Application', {
   endDate: {
     type: DataTypes.DATEONLY
   },
+  status: {
+    type: DataTypes.ENUM('Active', 'Inactive'),
+    defaultValue: 'Active'
+  },
   createdBy: {
     type: DataTypes.UUID
   },

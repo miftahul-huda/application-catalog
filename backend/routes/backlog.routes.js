@@ -23,4 +23,18 @@ router.patch('/:id', protect, approvedOnly, async (req, res) => {
   }
 });
 
+// Delete backlog
+router.delete('/:id', protect, approvedOnly, async (req, res) => {
+  try {
+    const { Backlog } = require('../models');
+    const backlog = await Backlog.findByPk(req.params.id);
+    if (!backlog) return res.status(404).json({ message: 'Backlog not found' });
+    await backlog.destroy();
+    res.json({ message: 'Backlog deleted' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+
 module.exports = router;

@@ -21,32 +21,38 @@ const THEMES = [
   {
     id: 'dark',
     name: 'Midnight',
-    description: 'Dark blue-grey',
-    preview: ['#0d0f14', '#7c8dff', '#13161e'],
+    description: 'Deep dark blue',
+    preview: ['#080b12', '#7c8dff', '#141826'],
   },
   {
     id: 'white',
     name: 'White',
-    description: 'Pure white',
-    preview: ['#ffffff', '#3b5bdb', '#fafafa'],
+    description: 'Pure clean white',
+    preview: ['#f7f8fc', '#3b5bdb', '#ffffff'],
   },
   {
     id: 'silver',
-    name: 'Light Grey',
-    description: 'Neutral silver',
-    preview: ['#e8ecef', '#4a5568', '#f3f5f7'],
+    name: 'Silver',
+    description: 'Neutral grey',
+    preview: ['#e4e8ed', '#4a5568', '#f2f4f7'],
   },
   {
     id: 'crimson',
-    name: 'Red',
-    description: 'Deep crimson',
-    preview: ['#180b10', '#ff3a5e', '#240d16'],
+    name: 'Crimson',
+    description: 'Deep red drama',
+    preview: ['#0f0609', '#ff3a5e', '#1c0910'],
   },
   {
     id: 'rose',
-    name: 'Rose White',
-    description: 'Clean white with red accents',
-    preview: ['#ffffff', '#e03131', '#fffafd'],
+    name: 'Rose',
+    description: 'Soft white & red',
+    preview: ['#fdf7f8', '#e03131', '#ffffff'],
+  },
+  {
+    id: 'light',
+    name: 'Indigo',
+    description: 'Light with indigo',
+    preview: ['#eef1f8', '#4f62ff', '#ffffff'],
   },
 ];
 
@@ -60,7 +66,6 @@ export default function Layout() {
 
   const currentTheme = user?.theme || 'dark';
 
-  // Close theme picker on outside click
   useEffect(() => {
     const handler = (e) => {
       if (themePickerRef.current && !themePickerRef.current.contains(e.target)) {
@@ -82,18 +87,31 @@ export default function Layout() {
 
   const activeThemeDef = THEMES.find(t => t.id === currentTheme) || THEMES[0];
 
+  // Breadcrumb label
+  const crumbLabel = location.pathname === '/'
+    ? 'Dashboard'
+    : location.pathname.split('/').filter(Boolean).map(s =>
+        s.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+      ).join(' › ');
+
   return (
     <div className="app-layout">
       {/* Mobile overlay */}
-      {sidebarOpen && (
-        <div
-          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 99, backdropFilter: 'blur(4px)' }}
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
+      <AnimatePresence>
+        {sidebarOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 99, backdropFilter: 'blur(6px)' }}
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Sidebar */}
       <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
+        {/* Logo */}
         <div className="sidebar-logo">
           <div className="sidebar-logo-icon">
             <Layers size={18} color="white" />
@@ -104,6 +122,7 @@ export default function Layout() {
           </div>
         </div>
 
+        {/* Nav */}
         <nav className="sidebar-nav">
           <div className="sidebar-section-label">Menu</div>
           {navItems.map(item => (
@@ -114,7 +133,7 @@ export default function Layout() {
               className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''}`}
               onClick={() => setSidebarOpen(false)}
             >
-              <item.icon size={18} />
+              <item.icon size={17} />
               {item.label}
             </NavLink>
           ))}
@@ -129,7 +148,7 @@ export default function Layout() {
                   className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''}`}
                   onClick={() => setSidebarOpen(false)}
                 >
-                  <item.icon size={18} />
+                  <item.icon size={17} />
                   {item.label}
                 </NavLink>
               ))}
@@ -137,21 +156,24 @@ export default function Layout() {
           )}
         </nav>
 
+        {/* User footer */}
         <div className="sidebar-user">
           <div className="sidebar-avatar">
             {user?.picture ? <img src={user.picture} alt={user?.name} /> : initials}
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div className="sidebar-user-name" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user?.name}</div>
+            <div className="sidebar-user-name" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {user?.name}
+            </div>
             <div className="sidebar-user-role">{user?.role}</div>
           </div>
           <button
-            className="btn btn-ghost btn-icon btn-sm"
-            style={{ color: 'rgba(255,255,255,0.4)' }}
+            className="icon-btn"
+            style={{ color: 'rgba(255,255,255,0.35)', flexShrink: 0 }}
             title="Logout"
             onClick={handleLogout}
           >
-            <LogOut size={16} />
+            <LogOut size={15} />
           </button>
         </div>
       </aside>
@@ -160,105 +182,129 @@ export default function Layout() {
       <div className="main-content">
         <header className="topbar">
           {/* Breadcrumb */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', fontSize: '0.95rem', color: 'var(--text-muted)' }}>
-            <span>AppCatalog</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+            <span style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', fontWeight: 500 }}>AppCatalog</span>
             {location.pathname !== '/' && (
               <>
-                <ChevronRight size={14} />
-                <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>
-                  {location.pathname.replace('/', '').replace('-', ' ').replace(/\b\w/g, c => c.toUpperCase()) || 'Dashboard'}
+                <ChevronRight size={13} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
+                <span style={{ fontSize: '0.8125rem', color: 'var(--text-primary)', fontWeight: 600 }}>
+                  {crumbLabel}
                 </span>
               </>
             )}
           </div>
 
           {/* Theme picker */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
-            <div ref={themePickerRef} style={{ position: 'relative' }}>
-              <button
-                onClick={() => setThemePickerOpen(!themePickerOpen)}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: '8px',
-                  padding: '7px 14px', borderRadius: '10px',
-                  background: 'var(--bg-glass)', border: '1px solid var(--border-subtle)',
-                  color: 'var(--text-primary)', cursor: 'pointer',
-                  fontSize: '1rem', fontWeight: 500,
-                  transition: 'all 0.2s'
-                }}
-              >
-                {/* Mini theme preview dots */}
-                <div style={{ display: 'flex', gap: '3px' }}>
-                  {activeThemeDef.preview.map((c, i) => (
-                    <div key={i} style={{ width: 10, height: 10, borderRadius: '50%', background: c, border: '1px solid rgba(255,255,255,0.2)' }} />
-                  ))}
-                </div>
-                <Palette size={14} />
-                <span>{activeThemeDef.name}</span>
-              </button>
+          <div ref={themePickerRef} style={{ position: 'relative' }}>
+            <button
+              onClick={() => setThemePickerOpen(!themePickerOpen)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '8px',
+                padding: '6px 12px', borderRadius: '8px',
+                background: 'var(--bg-glass)', border: '1px solid var(--border-medium)',
+                backdropFilter: 'blur(12px)',
+                color: 'var(--text-secondary)', cursor: 'pointer',
+                fontSize: '0.8125rem', fontWeight: 500,
+                transition: 'all 0.2s',
+              }}
+            >
+              <div style={{ display: 'flex', gap: '3px', alignItems: 'center' }}>
+                {activeThemeDef.preview.map((c, i) => (
+                  <div key={i} style={{
+                    width: 9, height: 9, borderRadius: '50%', background: c,
+                    border: '1px solid rgba(128,128,128,0.3)',
+                    flexShrink: 0,
+                  }} />
+                ))}
+              </div>
+              <Palette size={13} />
+              <span>{activeThemeDef.name}</span>
+            </button>
 
-              <AnimatePresence>
-                {themePickerOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 8, scale: 0.97 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 8, scale: 0.97 }}
-                    transition={{ duration: 0.18 }}
-                    style={{
-                      position: 'absolute', top: 'calc(100% + 10px)', right: 0,
-                      background: 'var(--bg-surface)',
-                      border: '1px solid var(--border-subtle)',
-                      borderRadius: '16px',
-                      boxShadow: '0 16px 40px rgba(0,0,0,0.3)',
-                      padding: '12px',
-                      zIndex: 1000,
-                      minWidth: '220px'
-                    }}
-                  >
-                    <div style={{ fontSize: '0.85rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-muted)', padding: '4px 8px 10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span>Choose Theme</span>
-                      <button onClick={() => setThemePickerOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex' }}><X size={14}/></button>
-                    </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                      {THEMES.map(theme => {
-                        const isActive = currentTheme === theme.id;
-                        return (
-                          <motion.button
-                            key={theme.id}
-                            onClick={() => { updateTheme(theme.id); setThemePickerOpen(false); }}
-                            whileHover={{ scale: 1.03 }}
-                            whileTap={{ scale: 0.97 }}
-                            style={{
-                              display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '8px',
-                              padding: '10px 12px', borderRadius: '10px', cursor: 'pointer',
-                              border: isActive ? '2px solid var(--accent-primary)' : '2px solid transparent',
-                              background: isActive ? 'rgba(var(--accent-primary-rgb), 0.08)' : 'var(--bg-hover)',
-                              transition: 'border-color 0.2s, background 0.2s',
-                              position: 'relative'
-                            }}
-                          >
-                            {/* Color preview row */}
-                            <div style={{ display: 'flex', gap: '5px', width: '100%' }}>
-                              {theme.preview.map((c, i) => (
-                                <div key={i} style={{ flex: 1, height: 30, borderRadius: '6px', background: c, border: '1px solid rgba(255,255,255,0.1)' }} />
-                              ))}
+            <AnimatePresence>
+              {themePickerOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: 6, scale: 0.97 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 6, scale: 0.97 }}
+                  transition={{ duration: 0.15, ease: 'easeOut' }}
+                  style={{
+                    position: 'absolute', top: 'calc(100% + 10px)', right: 0,
+                    background: 'var(--bg-surface)',
+                    border: '1px solid var(--border-medium)',
+                    borderRadius: 'var(--radius-xl)',
+                    boxShadow: 'var(--shadow-lg)',
+                    padding: '14px',
+                    zIndex: 1000,
+                    minWidth: '240px',
+                    backdropFilter: 'blur(20px)',
+                  }}
+                >
+                  <div style={{
+                    fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.1em',
+                    textTransform: 'uppercase', color: 'var(--text-muted)',
+                    padding: '0 6px 10px',
+                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                    borderBottom: '1px solid var(--border-subtle)', marginBottom: '10px',
+                  }}>
+                    <span>Choose Theme</span>
+                    <button
+                      onClick={() => setThemePickerOpen(false)}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex', padding: '2px' }}
+                    >
+                      <X size={13} />
+                    </button>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                    {THEMES.map(theme => {
+                      const isActive = currentTheme === theme.id;
+                      return (
+                        <motion.button
+                          key={theme.id}
+                          onClick={() => { updateTheme(theme.id); setThemePickerOpen(false); }}
+                          whileHover={{ scale: 1.03, y: -1 }}
+                          whileTap={{ scale: 0.97 }}
+                          style={{
+                            display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '8px',
+                            padding: '10px 11px', borderRadius: '8px', cursor: 'pointer',
+                            border: isActive ? '1.5px solid var(--border-active)' : '1.5px solid transparent',
+                            background: isActive ? 'var(--bg-glass)' : 'var(--bg-hover)',
+                            transition: 'all 0.15s',
+                            position: 'relative',
+                            textAlign: 'left',
+                          }}
+                        >
+                          {/* Color swatches */}
+                          <div style={{ display: 'flex', gap: '4px', width: '100%' }}>
+                            {theme.preview.map((c, i) => (
+                              <div key={i} style={{
+                                flex: 1, height: 24, borderRadius: 'var(--radius-sm)', background: c,
+                                border: '1px solid rgba(128,128,128,0.2)',
+                              }} />
+                            ))}
+                          </div>
+                          <div>
+                            <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)' }}>{theme.name}</div>
+                            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '1px' }}>{theme.description}</div>
+                          </div>
+                          {isActive && (
+                            <div style={{
+                              position: 'absolute', top: 7, right: 7,
+                              background: 'var(--gradient-brand)',
+                              borderRadius: '50%', width: 17, height: 17,
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              boxShadow: '0 2px 6px var(--accent-glow)',
+                            }}>
+                              <Check size={10} color="white" strokeWidth={3} />
                             </div>
-                            <div style={{ textAlign: 'left' }}>
-                              <div style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-primary)' }}>{theme.name}</div>
-                              <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{theme.description}</div>
-                            </div>
-                            {isActive && (
-                              <div style={{ position: 'absolute', top: 8, right: 8, background: 'var(--accent-primary)', borderRadius: '50%', width: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                <Check size={11} color="white" strokeWidth={3}/>
-                              </div>
-                            )}
-                          </motion.button>
-                        );
-                      })}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+                          )}
+                        </motion.button>
+                      );
+                    })}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </header>
 
