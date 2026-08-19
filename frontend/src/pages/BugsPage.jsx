@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { Search, Bug, Plus, Edit, Trash2, Calendar, User, Eye } from 'lucide-react';
+import { Search, Bug, Plus, Edit, Trash2, Calendar, User, Eye, Folder } from 'lucide-react';
 import api from '../services/api';
 import { useUI } from '../contexts/UIContext';
 import BugHistoryModal from '../components/BugHistoryModal';
