@@ -25,7 +25,7 @@ const stripHtml = (html) => {
     .trim();
 };
 
-export default function BugsPage() {
+export default function ErrorReportsPage() {
   const { toast, confirm } = useUI();
   const [bugs, setBugs] = useState([]);
   const [apps, setApps] = useState([]);
@@ -57,7 +57,6 @@ export default function BugsPage() {
       const params = {};
       if (appId) params.appId = appId;
       if (search.trim()) params.search = search;
-      // We filter status locally or via query params if API supports it (currently route doesn't filter status via query param directly but let's implement local filtering or send as query param)
       const res = await api.get('/bug-histories', { params });
       let filtered = res.data || [];
       if (status) {
@@ -65,7 +64,7 @@ export default function BugsPage() {
       }
       setBugs(filtered);
     } catch (err) {
-      toast('Gagal memuat laporan bug', 'error');
+      toast('Gagal memuat laporan error', 'error');
     } finally {
       setLoading(false);
     }
@@ -84,13 +83,13 @@ export default function BugsPage() {
   }, [search, appId, status, fetchBugs]);
 
   const handleDelete = (id) => {
-    confirm('Hapus Laporan Bug', 'Apakah Anda yakin ingin menghapus laporan bug ini?', async () => {
+    confirm('Hapus Laporan Error', 'Apakah Anda yakin ingin menghapus laporan error ini?', async () => {
       try {
         await api.delete(`/bug-histories/${id}`);
-        toast('Laporan bug berhasil dihapus', 'success');
+        toast('Laporan error berhasil dihapus', 'success');
         fetchBugs();
       } catch {
-        toast('Gagal menghapus laporan bug', 'error');
+        toast('Gagal menghapus laporan error', 'error');
       }
     }, 'danger');
   };
@@ -102,13 +101,13 @@ export default function BugsPage() {
       {/* Header */}
       <div className="page-header" style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <h1 className="page-title" style={{ marginBottom: '6px' }}>Error & Bug Reports</h1>
+          <h1 className="page-title" style={{ marginBottom: '6px' }}>Error Reports</h1>
           <p className="page-subtitle">
-            Daftar kendala teknis dan bug aplikasi yang dilaporkan.
+            Daftar kendala teknis dan error aplikasi yang dilaporkan.
           </p>
         </div>
         <button className="btn btn-primary" onClick={() => setShowAddForm(true)}>
-          <Plus size={16} /> Catat Bug Baru
+          <Plus size={16} /> Catat Error Baru
         </button>
       </div>
 
@@ -203,9 +202,9 @@ export default function BugsPage() {
       ) : bugs.length === 0 ? (
         <div className="empty-state" style={{ padding: '60px 20px', background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: '12px' }}>
           <Bug size={44} style={{ color: 'var(--text-muted)', marginBottom: '12px', opacity: 0.6 }} />
-          <div className="empty-state-title" style={{ fontSize: '1.1rem', fontWeight: 600 }}>Laporan bug tidak ditemukan</div>
+          <div className="empty-state-title" style={{ fontSize: '1.1rem', fontWeight: 600 }}>Laporan error tidak ditemukan</div>
           <p className="empty-state-desc" style={{ color: 'var(--text-muted)', fontSize: '0.9rem', maxWidth: '360px', margin: '6px auto 0' }}>
-            Tidak ada laporan bug yang cocok dengan filter atau belum ada laporan yang masuk.
+            Tidak ada laporan error yang cocok dengan filter atau belum ada laporan yang masuk.
           </p>
         </div>
       ) : (
@@ -213,7 +212,7 @@ export default function BugsPage() {
           <table>
             <thead>
               <tr>
-                <th style={{ width: '160px' }}>ID Bug</th>
+                <th style={{ width: '160px' }}>ID Error</th>
                 <th style={{ width: '180px' }}>Aplikasi</th>
                 <th>Deskripsi Error</th>
                 <th style={{ width: '160px' }}>Pelapor</th>

@@ -15,6 +15,7 @@ const navItems = [
   { to: '/documentations', icon: BookOpen, label: 'Documentations' },
   { to: '/source-codes', icon: GitBranch, label: 'Source Codes' },
   { to: '/backlogs', icon: Clock, label: 'Backlogs' },
+  { to: '/error-reports', icon: Bug, label: 'Error Reports' },
 ];
 const adminItems = [
   { to: '/admin', icon: Users, label: 'User Management' },
@@ -71,7 +72,7 @@ export default function Layout() {
   const currentTheme = user?.theme || 'dark';
 
   const visibleNavItems = user?.role === 'External'
-    ? [{ to: '/bugs', icon: Bug, label: 'Bug Reports' }]
+    ? [{ to: '/error-reports', icon: Bug, label: 'Error Reports' }]
     : navItems;
 
   useEffect(() => {

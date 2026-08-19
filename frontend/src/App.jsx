@@ -10,7 +10,7 @@ import ApplicationsPage from './pages/ApplicationsPage';
 import DocumentationsPage from './pages/DocumentationsPage';
 import SourceCodesPage from './pages/SourceCodesPage';
 import BacklogsPage from './pages/BacklogsPage';
-import BugsPage from './pages/BugsPage';
+import ErrorReportsPage from './pages/ErrorReportsPage';
 import AdminPage from './pages/AdminPage';
 import MasterDataPage from './pages/MasterDataPage';
 import PendingPage from './pages/PendingPage';
@@ -34,13 +34,13 @@ const PublicRoute = ({ children }) => {
 
 const InternalRoute = ({ children }) => {
   const { user } = useAuth();
-  if (user && user.role === 'External') return <Navigate to="/bugs" replace />;
+  if (user && user.role === 'External') return <Navigate to="/error-reports" replace />;
   return children;
 };
 
 const HomeRoute = () => {
   const { user } = useAuth();
-  if (user && user.role === 'External') return <Navigate to="/bugs" replace />;
+  if (user && user.role === 'External') return <Navigate to="/error-reports" replace />;
   return <DashboardPage />;
 };
 
@@ -52,7 +52,7 @@ export default function App() {
         <Route path="/pending" element={<PendingPage />} />
         <Route path="/" element={<PrivateRoute><Layout /></PrivateRoute>}>
           <Route index element={<HomeRoute />} />
-          <Route path="bugs" element={<BugsPage />} />
+          <Route path="error-reports" element={<ErrorReportsPage />} />
           <Route path="app-groups" element={<InternalRoute><AppGroupsPage /></InternalRoute>} />
           <Route path="app-groups/:id" element={<InternalRoute><AppGroupDetailPage /></InternalRoute>} />
           <Route path="applications" element={<InternalRoute><ApplicationsPage /></InternalRoute>} />
