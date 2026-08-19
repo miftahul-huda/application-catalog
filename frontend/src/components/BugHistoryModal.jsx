@@ -333,29 +333,31 @@ export default function BugHistoryModal({ applicationId, bug, onClose, onSuccess
             </div>
 
             {/* Error Causes & Troubleshoot */}
-            <div className="form-group" style={{ margin: 0 }}>
-              <label className="form-label">
-                <Wrench size={14} style={{ display: 'inline', marginRight: '4px', verticalAlign: 'middle' }} />
-                Error Causes & Troubleshoot / Solusi
-              </label>
-              <div style={{ background: 'var(--bg-card)', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--border-subtle)' }}>
-                <ReactQuill
-                  theme="snow"
-                  value={form.causesAndTroubleshoot}
-                  onChange={handleTroubleshootChange}
-                  style={{ height: '140px' }}
-                  placeholder="Catat penyebab error (root cause), langkah troubleshooting yang dilakukan, atau instruksi perbaikan..."
-                  modules={{
-                    toolbar: [
-                      ['bold', 'italic', 'underline', 'code-block'],
-                      [{ 'list': 'ordered' }, { 'list': 'bullet' }],
-                      ['clean']
-                    ]
-                  }}
-                />
+            {user?.role !== 'External' && (
+              <div className="form-group" style={{ margin: 0 }}>
+                <label className="form-label">
+                  <Wrench size={14} style={{ display: 'inline', marginRight: '4px', verticalAlign: 'middle' }} />
+                  Error Causes & Troubleshoot / Solusi
+                </label>
+                <div style={{ background: 'var(--bg-card)', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--border-subtle)' }}>
+                  <ReactQuill
+                    theme="snow"
+                    value={form.causesAndTroubleshoot}
+                    onChange={handleTroubleshootChange}
+                    style={{ height: '140px' }}
+                    placeholder="Catat penyebab error (root cause), langkah troubleshooting yang dilakukan, atau instruksi perbaikan..."
+                    modules={{
+                      toolbar: [
+                        ['bold', 'italic', 'underline', 'code-block'],
+                        [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+                        ['clean']
+                      ]
+                    }}
+                  />
+                </div>
+                <div style={{ height: '40px' }} /> {/* Spacing for Quill toolbar overflow */}
               </div>
-              <div style={{ height: '40px' }} /> {/* Spacing for Quill toolbar overflow */}
-            </div>
+            )}
           </div>
 
           <div className="modal-footer">
