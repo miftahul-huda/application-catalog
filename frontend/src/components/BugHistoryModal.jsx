@@ -78,8 +78,10 @@ export default function BugHistoryModal({ applicationId, bug, onClose, onSuccess
       const formData = new FormData();
       formData.append('file', file);
       formData.append('module', 'BugHistory');
-      if (applicationId) formData.append('moduleId', applicationId);
-      formData.append('type', 'image');
+      const currentAppId = applicationId || form.applicationId;
+      if (currentAppId) formData.append('moduleId', currentAppId);
+      const isVideoFile = file.type?.startsWith('video/');
+      formData.append('type', isVideoFile ? 'video' : 'image');
 
       try {
         const res = await api.post('/assets/upload', formData, {
@@ -87,7 +89,8 @@ export default function BugHistoryModal({ applicationId, bug, onClose, onSuccess
         });
         newUploaded.push({
           url: res.data.url,
-          fileName: file.name
+          fileName: file.name,
+          type: isVideoFile ? 'video' : 'image'
         });
       } catch (err) {
         console.error('Failed to upload screenshot:', file.name, err);
@@ -256,7 +259,7 @@ export default function BugHistoryModal({ applicationId, bug, onClose, onSuccess
                 ref={fileInputRef}
                 onChange={handleScreenshotUpload}
                 multiple
-                accept="image/*"
+                accept="image/*,video/*"
                 style={{ display: 'none' }}
               />
 
@@ -270,23 +273,52 @@ export default function BugHistoryModal({ applicationId, bug, onClose, onSuccess
                   borderRadius: '8px',
                   border: '1px solid var(--border-subtle)'
                 }}>
-                  {form.screenshots.map((s, idx) => (
-                    <div
-                      key={idx}
-                      style={{
-                        position: 'relative',
-                        borderRadius: '6px',
-                        overflow: 'hidden',
-                        height: '90px',
-                        border: '1px solid var(--border-subtle)',
-                        background: 'var(--bg-card)'
-                      }}
-                    >
-                      <img
-                        src={s.url}
-                        alt={s.fileName || `Screenshot ${idx + 1}`}
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                      />
+                  {form.screenshots.map((s, idx) => {
+                    const isVideo = s.type === 'video' || s.url?.match(/\.(mp4|webm|ogg|mov|mkv)($|\?)/i);
+                    return (
+                      <div
+                        key={idx}
+                        style={{
+                          position: 'relative',
+                          borderRadius: '6px',
+                          overflow: 'hidden',
+                          height: '90px',
+                          border: '1px solid var(--border-subtle)',
+                          background: 'var(--bg-card)'
+                        }}
+                      >
+                        {isVideo ? (
+                          <video
+                            src={s.url}
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                            muted
+                            playsInline
+                          />
+                        ) : (
+                          <img
+                            src={s.url}
+                            alt={s.fileName || `Screenshot ${idx + 1}`}
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                          />
+                        )}
+
+                        {isVideo && (
+                          <div style={{
+                            position: 'absolute',
+                            bottom: '4px',
+                            left: '4px',
+                            background: 'rgba(0,0,0,0.65)',
+                            color: '#fff',
+                            padding: '1px 5px',
+                            borderRadius: '3px',
+                            fontSize: '0.6rem',
+                            fontWeight: 'bold',
+                            pointerEvents: 'none',
+                            letterSpacing: '0.04em'
+                          }}>
+                            VIDEO
+                          </div>
+                        )}
                       <button
                         type="button"
                         onClick={() => removeScreenshot(idx)}
@@ -310,7 +342,8 @@ export default function BugHistoryModal({ applicationId, bug, onClose, onSuccess
                         <Trash2 size={12} />
                       </button>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               ) : (
                 <div
