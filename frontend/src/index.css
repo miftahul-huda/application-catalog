@@ -392,13 +392,10 @@ input, textarea, select, button { font-family: inherit; }
 
 .sidebar-logo-icon {
   width: 36px; height: 36px;
-  background: var(--gradient-brand);
-  border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  box-shadow: 0 4px 12px var(--accent-glow), 0 0 0 1px rgba(255,255,255,0.12);
 }
 
 .sidebar-logo-text {

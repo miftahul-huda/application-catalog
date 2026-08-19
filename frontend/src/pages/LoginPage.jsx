@@ -174,13 +174,9 @@ export default function LoginPage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '3.5rem' }}>
             <div style={{
               width: 42, height: 42,
-              background: 'linear-gradient(135deg, #667eea 0%, #9b59fa 50%, #a78bfa 100%)',
-              borderRadius: '12px',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              boxShadow: '0 4px 20px rgba(124,141,255,0.35), 0 0 0 1px rgba(255,255,255,0.12)',
-              overflow: 'hidden'
+              display: 'flex', alignItems: 'center', justifyContent: 'center'
             }}>
-              <img src={catLogo} alt="AppCat Logo" style={{ width: '26px', height: '26px', objectFit: 'contain' }} />
+              <img src={catLogo} alt="AppCat Logo" style={{ width: '42px', height: '42px', objectFit: 'contain' }} />
             </div>
             <div>
               <div style={{ fontSize: '1.2rem', fontWeight: 800, color: 'white', letterSpacing: '-0.02em' }}>AppCat</div>
