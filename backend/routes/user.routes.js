@@ -13,6 +13,18 @@ router.get('/', protect, adminOnly, async (req, res) => {
   } catch (e) { res.status(500).json({ message: e.message }); }
 });
 
+// List approved users — accessible to all approved users (for assignee pickers)
+router.get('/approved', protect, async (req, res) => {
+  try {
+    const users = await User.findAll({
+      where: { isApproved: true },
+      attributes: ['id', 'name', 'email', 'picture'],
+      order: [['name', 'ASC']]
+    });
+    res.json(users);
+  } catch (e) { res.status(500).json({ message: e.message }); }
+});
+
 // Approve user
 router.patch('/:id/approve', protect, adminOnly, async (req, res) => {
   try {

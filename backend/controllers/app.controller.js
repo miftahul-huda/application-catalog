@@ -7,7 +7,13 @@ const getApps = async (req, res) => {
   if (categoryId) where.categoryId = categoryId;
   if (functionId) where.functionId = functionId;
   
-  // Search logic could be added here with Op.like
+  if (search) {
+    const { Op } = require('sequelize');
+    where[Op.or] = [
+      { name: { [Op.iLike]: `%${search}%` } },
+      { description: { [Op.iLike]: `%${search}%` } }
+    ];
+  }
 
   try {
     const apps = await Application.findAll({

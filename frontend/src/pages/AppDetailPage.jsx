@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useSearchParams } from 'react-router-dom';
 import {
   ArrowLeft, Plus, Edit, Copy, Trash2, GitBranch, Server, Clock, User, Tag,
   FileText, Users, Code, Globe, Download, Save, Eye, EyeOff, X, ChevronDown, ChevronUp,
@@ -10,7 +10,7 @@ import api from '../services/api';
 import { useUI } from '../contexts/UIContext';
 import { useAuth } from '../contexts/AuthContext';
 import AppFormModal from '../components/AppFormModal';
-import BacklogFormModal from '../components/BacklogFormModal';
+import BacklogList from '../components/BacklogList';
 import DeploymentFormModal from '../components/DeploymentFormModal';
 import DeveloperPickerModal from '../components/DeveloperPickerModal';
 import TechStackModal from '../components/TechStackModal';
@@ -18,6 +18,7 @@ import SourceCodeModal from '../components/SourceCodeModal';
 import BugHistoryModal from '../components/BugHistoryModal';
 import ImagePreviewModal from '../components/ImagePreviewModal';
 import EnvVarsModal from '../components/EnvVarsModal';
+import DocFormModal from '../components/DocFormModal';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
 import html2canvas from 'html2canvas';
@@ -74,7 +75,8 @@ export default function AppDetailPage() {
   const [functions, setFunctions] = useState([]);
   const [roles, setRoles] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('General');
+  const [searchParams] = useSearchParams();
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'General');
 
   const [expandedBacklogs, setExpandedBacklogs] = useState(new Set());
 
@@ -90,6 +92,19 @@ export default function AppDetailPage() {
   const [expandedBugs, setExpandedBugs] = useState(new Set());
 
   const [envVarsTarget, setEnvVarsTarget] = useState(null); // { deploymentId, vars[] }
+  const [showEnvVars, setShowEnvVars] = useState({});
+
+  const [documentations, setDocumentations] = useState([]);
+  const [activeDoc, setActiveDoc] = useState(null);
+  const [showDocModal, setShowDocModal] = useState(false);
+  const [editDoc, setEditDoc] = useState(null);
+
+  const toggleShowEnvVars = (deplId) => {
+    setShowEnvVars(prev => ({
+      ...prev,
+      [deplId]: !prev[deplId]
+    }));
+  };
 
   // Modals
   const [showEditApp, setShowEditApp] = useState(false);
@@ -117,7 +132,7 @@ export default function AppDetailPage() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [appRes, blgRes, deplRes, statRes, catRes, fnRes, roleRes, scRes, bugRes] = await Promise.all([
+      const [appRes, blgRes, deplRes, statRes, catRes, fnRes, roleRes, scRes, bugRes, docRes] = await Promise.all([
         api.get(`/apps/${id}`),
         api.get(`/backlogs?appId=${id}`),
         api.get(`/deployments?appId=${id}`),
@@ -127,9 +142,9 @@ export default function AppDetailPage() {
         api.get('/master/roles'),
         api.get(`/source-codes?appId=${id}`),
         api.get(`/bug-histories?appId=${id}`),
+        api.get(`/documentations?appId=${id}`),
       ]);
       setApp(appRes.data);
-      setDocContent(appRes.data.documentation || '');
       setBacklogs(blgRes.data);
       setDeployments(deplRes.data);
       setStatuses(statRes.data);
@@ -138,6 +153,26 @@ export default function AppDetailPage() {
       setRoles(roleRes.data);
       setSourceCodes(scRes.data || []);
       setBugHistories(bugRes.data || []);
+      
+      const docs = docRes.data || [];
+      setDocumentations(docs);
+      if (docs.length > 0) {
+        setActiveDoc(prev => {
+          if (prev) {
+            const found = docs.find(d => d.id === prev.id);
+            if (found) return found;
+          }
+          const initialDocId = searchParams.get('docId');
+          if (initialDocId) {
+            const found = docs.find(d => d.id === initialDocId);
+            if (found) return found;
+          }
+          return docs[0];
+        });
+      } else {
+        setActiveDoc(null);
+      }
+
       setDevDetailsForm({
         status: appRes.data.status || 'Active',
         startDate: appRes.data.startDate || '',
@@ -152,6 +187,14 @@ export default function AppDetailPage() {
 
   useEffect(() => { load(); }, [load]);
 
+  useEffect(() => {
+    if (activeDoc) {
+      setDocContent(activeDoc.content || '');
+    } else {
+      setDocContent('');
+    }
+  }, [activeDoc]);
+
   const handleSaveDevDetails = async () => {
     try {
       await api.put(`/apps/${id}`, devDetailsForm);
@@ -164,14 +207,28 @@ export default function AppDetailPage() {
   };
 
   const handleSaveDoc = async () => {
+    if (!activeDoc) return;
     try {
-      await api.put(`/apps/${id}`, { documentation: docContent });
+      const res = await api.put(`/documentations/${activeDoc.id}`, { content: docContent });
       toast('Dokumentasi disimpan', 'success');
       setIsEditingDoc(false);
-      setApp(prev => ({ ...prev, documentation: docContent }));
+      setDocumentations(prev => prev.map(d => d.id === activeDoc.id ? res.data : d));
+      setActiveDoc(res.data);
     } catch {
       toast('Gagal menyimpan dokumentasi', 'error');
     }
+  };
+
+  const handleDeleteDoc = (docId) => {
+    confirm('Hapus Dokumentasi', 'Yakin ingin menghapus dokumen ini?', async () => {
+      try {
+        await api.delete(`/documentations/${docId}`);
+        toast('Dokumentasi berhasil dihapus', 'success');
+        load();
+      } catch {
+        toast('Gagal menghapus dokumentasi', 'error');
+      }
+    }, 'danger');
   };
 
   const downloadPDF = async () => {
@@ -500,45 +557,164 @@ export default function AppDetailPage() {
 
           {/* Documentation Tab */}
           {activeTab === 'Documentation' && (
-            <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-              <div className="card-header" style={{ padding: '12px 24px', borderBottom: '1px solid var(--border-subtle)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-hover)' }}>
-                <div style={{ fontWeight: 600 }}>Google-style Documentation</div>
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <button className="btn btn-secondary btn-sm" onClick={downloadPDF}><Download size={14} /> PDF</button>
-                  {isEditingDoc ? (
-                    <>
-                      <button className="btn btn-secondary btn-sm" onClick={() => setIsEditingDoc(false)}><X size={14} /> Cancel</button>
-                      <button className="btn btn-primary btn-sm" onClick={handleSaveDoc}><Save size={14} /> Save Changes</button>
-                    </>
-                  ) : (
-                    <button className="btn btn-primary btn-sm" onClick={() => setIsEditingDoc(true)}><Edit size={14} /> Edit Mode</button>
-                  )}
+            <div style={{ display: 'grid', gridTemplateColumns: '260px 1fr', gap: '1.5rem', alignItems: 'start' }}>
+              {/* Sidebar List */}
+              <div className="card" style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <h3 className="section-title" style={{ fontSize: '0.85rem', margin: 0, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)' }}>Daftar Dokumen</h3>
+                  <button
+                    className="btn btn-primary btn-icon btn-sm"
+                    title="Tambah Dokumen Baru"
+                    onClick={() => { setEditDoc(null); setShowDocModal(true); }}
+                    style={{ width: '26px', height: '26px', padding: 0 }}
+                  >
+                    <Plus size={14} />
+                  </button>
                 </div>
-              </div>
-              <div style={{ padding: '24px', minHeight: '600px', background: 'var(--bg-card)' }}>
-                {isEditingDoc ? (
-                  <ReactQuill
-                    theme="snow"
-                    value={docContent}
-                    onChange={setDocContent}
-                    style={{ height: '500px', marginBottom: '50px' }}
-                    modules={{
-                      toolbar: [
-                        [{ 'header': [1, 2, 3, false] }],
-                        ['bold', 'italic', 'underline', 'strike', 'blockquote'],
-                        [{ 'list': 'ordered' }, { 'list': 'bullet' }, { 'indent': '-1' }, { 'indent': '+1' }],
-                        ['link', 'image', 'code-block'],
-                        ['clean']
-                      ],
-                    }}
-                  />
+                
+                {documentations.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '32px 8px', color: 'var(--text-muted)', fontSize: '0.82rem', border: '1px dashed var(--border-subtle)', borderRadius: '8px' }}>
+                    Belum ada dokumentasi. Klik + untuk membuat.
+                  </div>
                 ) : (
-                  <div
-                    ref={docRef}
-                    className="doc-viewer ql-editor"
-                    style={{ minHeight: '500px', padding: 0 }}
-                    dangerouslySetInnerHTML={{ __html: docContent || '<div style="color:var(--text-muted); text-align:center; padding-top:100px;">Documentation is empty. Click edit to start writing.</div>' }}
-                  />
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    {documentations.map(doc => {
+                      const isActive = activeDoc?.id === doc.id;
+                      return (
+                        <div
+                          key={doc.id}
+                          onClick={() => {
+                            if (isEditingDoc) {
+                              confirm('Tinggalkan Halaman', 'Perubahan yang belum disimpan akan hilang. Lanjutkan?', () => {
+                                setIsEditingDoc(false);
+                                setActiveDoc(doc);
+                              });
+                            } else {
+                              setActiveDoc(doc);
+                            }
+                          }}
+                          style={{
+                            padding: '8px 12px',
+                            borderRadius: '8px',
+                            cursor: 'pointer',
+                            background: isActive ? 'rgba(99, 102, 241, 0.08)' : 'transparent',
+                            color: isActive ? 'var(--accent-primary)' : 'var(--text-primary)',
+                            border: isActive ? '1px solid rgba(99, 102, 241, 0.2)' : '1px solid transparent',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            fontSize: '0.85rem',
+                            fontWeight: isActive ? 600 : 400,
+                            transition: 'all 0.15s ease'
+                          }}
+                          onMouseOver={e => {
+                            if (!isActive) e.currentTarget.style.background = 'var(--bg-hover)';
+                            const actions = e.currentTarget.querySelector('.doc-item-actions');
+                            if (actions) actions.style.opacity = 1;
+                          }}
+                          onMouseOut={e => {
+                            if (!isActive) {
+                              e.currentTarget.style.background = 'transparent';
+                              const actions = e.currentTarget.querySelector('.doc-item-actions');
+                              if (actions) actions.style.opacity = 0;
+                            }
+                          }}
+                        >
+                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '170px' }}>
+                            {doc.title}
+                          </span>
+                          <div 
+                            style={{ display: 'flex', gap: '2px', opacity: isActive ? 1 : 0, transition: 'opacity 0.15s ease' }} 
+                            className="doc-item-actions"
+                            onClick={e => e.stopPropagation()}
+                          >
+                            <button
+                              className="btn btn-ghost btn-icon btn-sm"
+                              style={{ width: '20px', height: '20px', padding: 0 }}
+                              onClick={() => { setEditDoc(doc); setShowDocModal(true); }}
+                              title="Ubah Judul"
+                            >
+                              <Edit size={11} />
+                            </button>
+                            <button
+                              className="btn btn-ghost btn-icon btn-sm"
+                              style={{ width: '20px', height: '20px', padding: 0, color: 'var(--accent-danger)' }}
+                              onClick={() => handleDeleteDoc(doc.id)}
+                              title="Hapus"
+                            >
+                              <Trash2 size={11} />
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Content Area */}
+              <div className="card" style={{ padding: 0, overflow: 'hidden', minHeight: '600px', display: 'flex', flexDirection: 'column' }}>
+                {activeDoc ? (
+                  <>
+                    <div className="card-header" style={{ padding: '12px 24px', borderBottom: '1px solid var(--border-subtle)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-hover)', gap: '1rem', flexWrap: 'wrap' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', minWidth: 0 }}>
+                        <div style={{ fontWeight: 600, fontSize: '1.05rem', color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{activeDoc.title}</div>
+                        {activeDoc.creator && (
+                          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            Dibuat oleh {activeDoc.creator.name} • {new Date(activeDoc.createdAt).toLocaleDateString('id-ID')}
+                          </div>
+                        )}
+                      </div>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <button className="btn btn-secondary btn-sm" onClick={downloadPDF}><Download size={14} /> PDF</button>
+                        {isEditingDoc ? (
+                          <>
+                            <button className="btn btn-secondary btn-sm" onClick={() => setIsEditingDoc(false)}><X size={14} /> Batal</button>
+                            <button className="btn btn-primary btn-sm" onClick={handleSaveDoc}><Save size={14} /> Simpan Perubahan</button>
+                          </>
+                        ) : (
+                          <button className="btn btn-primary btn-sm" onClick={() => setIsEditingDoc(true)}><Edit size={14} /> Mode Edit</button>
+                        )}
+                      </div>
+                    </div>
+                    <div style={{ padding: '24px', flex: 1, background: 'var(--bg-card)', minHeight: '500px' }}>
+                      {isEditingDoc ? (
+                        <ReactQuill
+                          theme="snow"
+                          value={docContent}
+                          onChange={setDocContent}
+                          style={{ height: '420px', marginBottom: '50px' }}
+                          modules={{
+                            toolbar: [
+                              [{ 'header': [1, 2, 3, false] }],
+                              ['bold', 'italic', 'underline', 'strike', 'blockquote'],
+                              [{ 'list': 'ordered' }, { 'list': 'bullet' }, { 'indent': '-1' }, { 'indent': '+1' }],
+                              ['link', 'image', 'code-block'],
+                              ['clean']
+                            ],
+                          }}
+                        />
+                      ) : (
+                        <div
+                          ref={docRef}
+                          className="doc-viewer ql-editor"
+                          style={{ minHeight: '400px', padding: 0 }}
+                          dangerouslySetInnerHTML={{ __html: docContent || '<div style="color:var(--text-muted); text-align:center; padding-top:100px;">Dokumentasi kosong. Klik Mode Edit untuk mulai menulis.</div>' }}
+                        />
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '500px', color: 'var(--text-muted)', gap: '16px', padding: '40px' }}>
+                    <FileText size={48} style={{ opacity: 0.5 }} />
+                    <div style={{ fontSize: '0.95rem', textAlign: 'center' }}>Belum ada dokumen terpilih. Silakan pilih atau buat dokumen baru.</div>
+                    <button
+                      className="btn btn-primary btn-sm"
+                      onClick={() => { setEditDoc(null); setShowDocModal(true); }}
+                    >
+                      <Plus size={14} /> Tambah Dokumentasi Pertama
+                    </button>
+                  </div>
                 )}
               </div>
             </div>
@@ -693,140 +869,12 @@ export default function AppDetailPage() {
             <div>
               <div className="section-header" style={{ marginBottom: '1rem' }}>
                 <h2 className="section-title">Backlog Requests</h2>
-                <button className="btn btn-primary btn-sm" onClick={() => setShowBacklogForm(true)}><Plus size={14} /> Add Backlog</button>
               </div>
-              {backlogs.length === 0 ? (
-                <div className="empty-state">
-                  <Clock size={40} color="var(--text-muted)" />
-                  <div className="empty-state-title">No backlogs found</div>
-                  <button className="btn btn-primary" onClick={() => setShowBacklogForm(true)}>Create First Backlog</button>
-                </div>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', width: '100%' }}>
-                  {backlogs.map(b => {
-                    const isExpanded = expandedBacklogs.has(b.id);
-                    return (
-                      <div
-                        key={b.id}
-                        className="card shadow-hover"
-                        style={{
-                          padding: '10px 14px',
-                          width: '100%',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          gap: isExpanded ? '10px' : '0',
-                          minHeight: 'auto',
-                          cursor: 'pointer',
-                          borderColor: isExpanded ? 'var(--accent-primary)' : 'var(--border-subtle)',
-                          transition: 'border-color 0.2s ease, box-shadow 0.2s ease'
-                        }}
-                        onClick={() => toggleBacklog(b.id)}
-                      >
-                        {/* Main Row */}
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', width: '100%' }}>
-                          {/* Left: ID & Status Badge */}
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
-                            <span className="badge badge-neutral" style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', padding: '2px 6px' }}>
-                              {b.id}
-                            </span>
-                            <span className={`badge ${STATUS_COLORS[b.status?.name] || 'badge-neutral'}`} style={{ fontSize: '0.75rem', padding: '2px 8px' }}>
-                              {b.status?.name}
-                            </span>
-                          </div>
-
-                          {/* Middle: 1-Line Text Preview (shown when collapsed) */}
-                          <div 
-                            style={{
-                              flex: 1,
-                              minWidth: 0,
-                              fontSize: '0.85rem',
-                              color: isExpanded ? 'var(--text-primary)' : 'var(--text-secondary)',
-                              fontWeight: isExpanded ? 600 : 400,
-                              whiteSpace: 'nowrap',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              lineHeight: 1.3
-                            }}
-                            title={stripHtml(b.content)}
-                          >
-                            {stripHtml(b.content) || '—'}
-                          </div>
-
-                          {/* Right: Meta & Actions */}
-                          <div 
-                            style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}
-                          >
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                              <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                <User size={11} /> {b.creator?.name}
-                              </span>
-                              <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                <Clock size={11} /> {new Date(b.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
-                              </span>
-                              {b.hoursSpent > 0 && (
-                                <span style={{ fontWeight: 600, color: 'var(--accent-primary)' }}>
-                                  ⏱️ {b.hoursSpent}h
-                                </span>
-                              )}
-                            </div>
-
-                            <select
-                              className="form-select form-select-sm"
-                              style={{ width: 115, fontSize: '0.75rem', padding: '2px 6px', height: '26px' }}
-                              value={b.statusId}
-                              onChange={(e) => { e.stopPropagation(); handleStatusChange(b.id, e.target.value); }}
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              {statuses.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                            </select>
-
-                            <button
-                              className="btn btn-ghost btn-icon btn-sm"
-                              title="Hapus Backlog"
-                              onClick={(e) => { e.stopPropagation(); handleDeleteBacklog(b.id); }}
-                              style={{ color: 'var(--accent-danger)', width: '24px', height: '24px', padding: 0 }}
-                            >
-                              <Trash2 size={13} />
-                            </button>
-
-                            <div style={{ color: 'var(--text-muted)', display: 'flex', alignItems: 'center', marginLeft: '2px', pointerEvents: 'none' }}>
-                              {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Expanded Full Rich Content */}
-                        {isExpanded && (
-                          <div 
-                            style={{
-                              padding: '14px 16px',
-                              background: 'var(--bg-hover)',
-                              borderRadius: '8px',
-                              border: '1px solid var(--border-subtle)',
-                              marginTop: '4px',
-                              animation: 'fadeIn 0.2s ease-out'
-                            }}
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <div 
-                              className="ql-editor" 
-                              style={{
-                                fontSize: '0.9rem',
-                                color: 'var(--text-primary)',
-                                padding: 0,
-                                maxHeight: '400px',
-                                overflowY: 'auto',
-                                lineHeight: 1.6
-                              }}
-                              dangerouslySetInnerHTML={{ __html: b.content }}
-                            />
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
+              <BacklogList
+                applicationId={id}
+                showAppLink={false}
+                showAppFilter={false}
+              />
             </div>
           )}
 
@@ -1218,9 +1266,19 @@ export default function AppDetailPage() {
                       {Array.isArray(d.envVars) && d.envVars.length > 0 && (
                         <div style={{ marginTop: '1rem', borderTop: '1px solid var(--border-subtle)', paddingTop: '0.75rem' }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                            <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: 'var(--font-mono)' }}>
-                              Environment Variables ({d.envVars.length})
-                            </span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: 'var(--font-mono)' }}>
+                                Environment Variables ({d.envVars.length})
+                              </span>
+                              <button
+                                className="btn btn-ghost btn-icon btn-sm"
+                                style={{ width: '24px', height: '24px', padding: 0, color: 'var(--text-muted)' }}
+                                onClick={() => toggleShowEnvVars(d.id)}
+                                title={showEnvVars[d.id] ? "Hide Values" : "Show Values"}
+                              >
+                                {showEnvVars[d.id] ? <EyeOff size={13} /> : <Eye size={13} />}
+                              </button>
+                            </div>
                             <button
                               className="btn btn-ghost btn-sm"
                               style={{ fontSize: '0.75rem', padding: '2px 8px' }}
@@ -1249,8 +1307,15 @@ export default function AppDetailPage() {
                                 <span style={{ padding: '5px 10px', fontWeight: 700, color: 'var(--accent-primary)', borderRight: '1px solid var(--border-subtle)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                   {ev.key}
                                 </span>
-                                <span style={{ padding: '5px 10px', color: 'var(--text-muted)', letterSpacing: '0.08em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                  ••••••••
+                                <span style={{
+                                  padding: '5px 10px',
+                                  color: showEnvVars[d.id] ? 'var(--text-primary)' : 'var(--text-muted)',
+                                  letterSpacing: showEnvVars[d.id] ? 'normal' : '0.08em',
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap'
+                                }}>
+                                  {showEnvVars[d.id] ? ev.value : '••••••••'}
                                 </span>
                               </div>
                             ))}
@@ -1338,14 +1403,7 @@ export default function AppDetailPage() {
           onSuccess={() => { setShowEditApp(false); load(); }}
         />
       )}
-      {showBacklogForm && (
-        <BacklogFormModal
-          applicationId={id}
-          statuses={statuses}
-          onClose={() => setShowBacklogForm(false)}
-          onSuccess={() => { setShowBacklogForm(false); load(); }}
-        />
-      )}
+      {/* BacklogFormModal now handled inside BacklogList */}
       {showDeployForm && (
         <DeploymentFormModal
           applicationId={id}
@@ -1408,6 +1466,14 @@ export default function AppDetailPage() {
             );
             setEnvVarsTarget(null);
           }}
+        />
+      )}
+      {showDocModal && (
+        <DocFormModal
+          applicationId={id}
+          doc={editDoc}
+          onClose={() => { setShowDocModal(false); setEditDoc(null); }}
+          onSuccess={() => { setShowDocModal(false); setEditDoc(null); load(); }}
         />
       )}
     </div>

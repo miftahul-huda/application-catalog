@@ -26,6 +26,7 @@ app.use('/api/users', require('./routes/user.routes'));
 app.use('/api/assets', require('./routes/asset.routes'));
 app.use('/api/source-codes', require('./routes/source-code.routes'));
 app.use('/api/bug-histories', require('./routes/bug-history.routes'));
+app.use('/api/documentations', require('./routes/documentation.routes'));
 
 
 
@@ -79,12 +80,63 @@ const seedMasterData = async () => {
   }
 };
 
+const migrateDocumentationData = async () => {
+  const { Application, Documentation } = require('./models');
+  const { Op } = require('sequelize');
+  try {
+    const apps = await Application.findAll({
+      where: {
+        documentation: {
+          [Op.and]: [
+            { [Op.ne]: null },
+            { [Op.ne]: '' }
+          ]
+        }
+      }
+    });
+    if (apps.length > 0) {
+      console.log(`Running migration for ${apps.length} legacy application documentations...`);
+      for (const app of apps) {
+        if (app.documentation && app.documentation.trim() !== '') {
+          const today = new Date();
+          const dateStr = today.toISOString().slice(0, 10).replace(/-/g, '');
+          const prefix = `DOC-${app.id}-${dateStr}`;
+          const count = await Documentation.count({
+            where: { applicationId: app.id }
+          });
+          if (count === 0) {
+            const last = await Documentation.findOne({
+              where: { id: { [Op.like]: `${prefix}-%` } },
+              order: [['createdAt', 'DESC']]
+            });
+            const next = last ? parseInt(last.id.split('-').pop()) + 1 : 1;
+            const docId = `${prefix}-${String(next).padStart(3, '0')}`;
+            await Documentation.create({
+              id: docId,
+              applicationId: app.id,
+              title: 'General Documentation',
+              content: app.documentation,
+              createdBy: app.createdBy
+            });
+            console.log(`Migrated legacy documentation for app: ${app.id}`);
+          }
+          await app.update({ documentation: null });
+        }
+      }
+      console.log('✅ Legacy documentation migration completed.');
+    }
+  } catch (error) {
+    console.error('❌ Failed to migrate legacy documentation:', error);
+  }
+};
+
 const startServer = async () => {
   try {
     await sequelize.authenticate();
     console.log('✅ Database connected');
     await sequelize.sync({ alter: true });
     console.log('✅ Models synchronized');
+    await migrateDocumentationData();
     await seedMasterData();
     console.log('✅ Master data seeded');
     app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));

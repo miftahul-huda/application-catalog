@@ -9,10 +9,13 @@ const ApplicationGroup = require('./ApplicationGroup');
 const Application = require('./Application');
 const ApplicationDeveloper = require('./ApplicationDeveloper');
 const Backlog = require('./Backlog');
+const BacklogAssignee = require('./BacklogAssignee');
+const BacklogStatusHistory = require('./BacklogStatusHistory');
 const Deployment = require('./Deployment');
 const Asset = require('./Asset');
 const SourceCode = require('./SourceCode');
 const BugHistory = require('./BugHistory');
+const Documentation = require('./Documentation');
 
 // Associations
 
@@ -41,6 +44,15 @@ ApplicationDeveloper.belongsTo(DeveloperRole, { foreignKey: 'roleId', as: 'role'
 Backlog.belongsTo(Application, { foreignKey: 'applicationId' });
 Backlog.belongsTo(BacklogStatus, { foreignKey: 'statusId', as: 'status' });
 Backlog.belongsTo(User, { foreignKey: 'createdBy', as: 'creator' });
+Backlog.belongsToMany(User, { through: BacklogAssignee, foreignKey: 'backlogId', otherKey: 'userId', as: 'assignees' });
+User.belongsToMany(Backlog, { through: BacklogAssignee, foreignKey: 'userId', otherKey: 'backlogId', as: 'assignedBacklogs' });
+BacklogAssignee.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+BacklogAssignee.belongsTo(Backlog, { foreignKey: 'backlogId' });
+Backlog.hasMany(BacklogStatusHistory, { foreignKey: 'backlogId', as: 'statusHistory' });
+BacklogStatusHistory.belongsTo(Backlog, { foreignKey: 'backlogId' });
+BacklogStatusHistory.belongsTo(BacklogStatus, { foreignKey: 'fromStatusId', as: 'fromStatus' });
+BacklogStatusHistory.belongsTo(BacklogStatus, { foreignKey: 'toStatusId', as: 'toStatus' });
+BacklogStatusHistory.belongsTo(User, { foreignKey: 'changedBy', as: 'changedByUser' });
 
 // Deployment
 Deployment.belongsTo(Application, { foreignKey: 'applicationId' });
@@ -51,6 +63,11 @@ SourceCode.belongsTo(Application, { foreignKey: 'applicationId' });
 // BugHistory
 BugHistory.belongsTo(Application, { foreignKey: 'applicationId' });
 BugHistory.belongsTo(User, { foreignKey: 'createdBy', as: 'creator' });
+
+// Documentation
+Application.hasMany(Documentation, { foreignKey: 'applicationId', as: 'documentations', onDelete: 'CASCADE' });
+Documentation.belongsTo(Application, { foreignKey: 'applicationId' });
+Documentation.belongsTo(User, { foreignKey: 'createdBy', as: 'creator' });
 
 const models = {
   sequelize,
@@ -64,10 +81,13 @@ const models = {
   Application,
   ApplicationDeveloper,
   Backlog,
+  BacklogAssignee,
+  BacklogStatusHistory,
   Deployment,
   Asset,
   SourceCode,
-  BugHistory
+  BugHistory,
+  Documentation
 };
 
 module.exports = models;

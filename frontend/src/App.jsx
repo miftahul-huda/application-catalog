@@ -6,6 +6,10 @@ import DashboardPage from './pages/DashboardPage';
 import AppGroupsPage from './pages/AppGroupsPage';
 import AppGroupDetailPage from './pages/AppGroupDetailPage';
 import AppDetailPage from './pages/AppDetailPage';
+import ApplicationsPage from './pages/ApplicationsPage';
+import DocumentationsPage from './pages/DocumentationsPage';
+import SourceCodesPage from './pages/SourceCodesPage';
+import BacklogsPage from './pages/BacklogsPage';
 import AdminPage from './pages/AdminPage';
 import MasterDataPage from './pages/MasterDataPage';
 import PendingPage from './pages/PendingPage';
@@ -37,6 +41,10 @@ export default function App() {
           <Route index element={<DashboardPage />} />
           <Route path="app-groups" element={<AppGroupsPage />} />
           <Route path="app-groups/:id" element={<AppGroupDetailPage />} />
+          <Route path="applications" element={<ApplicationsPage />} />
+          <Route path="documentations" element={<DocumentationsPage />} />
+          <Route path="source-codes" element={<SourceCodesPage />} />
+          <Route path="backlogs" element={<BacklogsPage />} />
           <Route path="apps/:id" element={<AppDetailPage />} />
           <Route path="admin" element={<PrivateRoute adminOnly><AdminPage /></PrivateRoute>} />
           <Route path="master" element={<PrivateRoute adminOnly><MasterDataPage /></PrivateRoute>} />

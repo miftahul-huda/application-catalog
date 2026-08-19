@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const { protect, approvedOnly } = require('../middleware/auth');
-const { getBacklogs, createBacklog, uploadBacklogAsset } = require('../controllers/backlog.controller');
+const { getBacklogs, createBacklog, uploadBacklogAsset, backlogInclude } = require('../controllers/backlog.controller');
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 50 * 1024 * 1024 } });
 
@@ -10,20 +10,45 @@ router.get('/', protect, approvedOnly, getBacklogs);
 router.post('/', protect, approvedOnly, createBacklog);
 router.post('/:backlogId/assets', protect, approvedOnly, upload.single('file'), uploadBacklogAsset);
 
-// Update backlog status
+// PATCH: update backlog fields, manage assignees & log status changes
 router.patch('/:id', protect, approvedOnly, async (req, res) => {
   try {
-    const { Backlog } = require('../models');
+    const { Backlog, BacklogAssignee, BacklogStatusHistory } = require('../models');
     const backlog = await Backlog.findByPk(req.params.id);
     if (!backlog) return res.status(404).json({ message: 'Backlog not found' });
-    await backlog.update(req.body);
-    res.json(backlog);
+
+    const { assigneeIds, ...fields } = req.body;
+
+    // Detect status change and log it
+    if (fields.statusId && String(fields.statusId) !== String(backlog.statusId)) {
+      await BacklogStatusHistory.create({
+        backlogId: backlog.id,
+        fromStatusId: backlog.statusId,
+        toStatusId: fields.statusId,
+        changedBy: req.user.id,
+        changedAt: new Date()
+      });
+    }
+
+    await backlog.update(fields);
+
+    // Sync assignees if provided
+    if (assigneeIds !== undefined) {
+      await BacklogAssignee.destroy({ where: { backlogId: backlog.id } });
+      if (assigneeIds.length > 0) {
+        const rows = assigneeIds.map(userId => ({ backlogId: backlog.id, userId }));
+        await BacklogAssignee.bulkCreate(rows, { ignoreDuplicates: true });
+      }
+    }
+
+    const full = await Backlog.findByPk(backlog.id, { include: backlogInclude });
+    res.json(full);
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
 });
 
-// Delete backlog
+// DELETE backlog
 router.delete('/:id', protect, approvedOnly, async (req, res) => {
   try {
     const { Backlog } = require('../models');
@@ -35,6 +60,5 @@ router.delete('/:id', protect, approvedOnly, async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 });
-
 
 module.exports = router;

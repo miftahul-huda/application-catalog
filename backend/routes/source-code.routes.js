@@ -1,14 +1,29 @@
 const express = require('express');
 const router = express.Router();
 const { protect, approvedOnly } = require('../middleware/auth');
-const { SourceCode } = require('../models');
+const { SourceCode, Application } = require('../models');
 
 // GET all source codes for an application
 router.get('/', protect, approvedOnly, async (req, res) => {
-  const { appId } = req.query;
+  const { appId, search } = req.query;
+  const { Op } = require('sequelize');
+  
+  const where = {};
+  if (appId) where.applicationId = appId;
+  
+  if (search) {
+    where[Op.or] = [
+      { url: { [Op.iLike]: `%${search}%` } },
+      { description: { [Op.iLike]: `%${search}%` } }
+    ];
+  }
+
   try {
     const sourceCodes = await SourceCode.findAll({
-      where: appId ? { applicationId: appId } : {},
+      where,
+      include: [
+        { model: Application, attributes: ['id', 'name'] }
+      ],
       order: [['createdAt', 'DESC']]
     });
     res.json(sourceCodes);
