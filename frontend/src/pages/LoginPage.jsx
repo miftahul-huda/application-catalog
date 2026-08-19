@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useUI } from '../contexts/UIContext';
-import { Shield, Clock, Zap } from 'lucide-react';
+import { Shield, Clock, Zap, Layers } from 'lucide-react';
 import catLogo from '../assets/cat.png';
 
 export default function LoginPage() {
