@@ -75,6 +75,23 @@ router.post('/', protect, approvedOnly, async (req, res) => {
       status: status || 'Open',
       createdBy: req.user.id
     });
+
+    // Send email to developers if reported by an external user
+    if (req.user.role === 'External') {
+      try {
+        const { Application, ApplicationDeveloper } = require('../models');
+        const { sendErrorNotification } = require('../utils/mailer');
+        const app = await Application.findByPk(applicationId, {
+          include: [{ model: ApplicationDeveloper, as: 'developers' }]
+        });
+        if (app && app.developers && app.developers.length > 0) {
+          await sendErrorNotification(app.developers, bug, app.name);
+        }
+      } catch (err) {
+        console.error('Failed to notify developers:', err);
+      }
+    }
+
     res.status(201).json(bug);
   } catch (error) {
     res.status(400).json({ message: error.message });
