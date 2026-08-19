@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const { protect, approvedOnly } = require('../middleware/auth');
+const { protect, internalOnly } = require('../middleware/auth');
 const { SourceCode, Application } = require('../models');
 
 // GET all source codes for an application
-router.get('/', protect, approvedOnly, async (req, res) => {
+router.get('/', protect, internalOnly, async (req, res) => {
   const { appId, search } = req.query;
   const { Op } = require('sequelize');
   
@@ -33,7 +33,7 @@ router.get('/', protect, approvedOnly, async (req, res) => {
 });
 
 // POST create new source code
-router.post('/', protect, approvedOnly, async (req, res) => {
+router.post('/', protect, internalOnly, async (req, res) => {
   try {
     const { applicationId, url, description } = req.body;
     if (!applicationId || !url) {
@@ -51,7 +51,7 @@ router.post('/', protect, approvedOnly, async (req, res) => {
 });
 
 // PUT update source code
-router.put('/:id', protect, approvedOnly, async (req, res) => {
+router.put('/:id', protect, internalOnly, async (req, res) => {
   try {
     const sourceCode = await SourceCode.findByPk(req.params.id);
     if (!sourceCode) return res.status(404).json({ message: 'Source code not found' });
@@ -64,7 +64,7 @@ router.put('/:id', protect, approvedOnly, async (req, res) => {
 });
 
 // DELETE remove source code
-router.delete('/:id', protect, approvedOnly, async (req, res) => {
+router.delete('/:id', protect, internalOnly, async (req, res) => {
   try {
     const sourceCode = await SourceCode.findByPk(req.params.id);
     if (!sourceCode) return res.status(404).json({ message: 'Source code not found' });

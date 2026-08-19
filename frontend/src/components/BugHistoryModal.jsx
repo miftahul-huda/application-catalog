@@ -12,10 +12,11 @@ export default function BugHistoryModal({ applicationId, bug, onClose, onSuccess
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [apps, setApps] = useState([]);
   const fileInputRef = useRef(null);
 
   const [form, setForm] = useState({
-    applicationId,
+    applicationId: applicationId || '',
     description: '',
     reportedBy: user?.name || '',
     causesAndTroubleshoot: '',
@@ -24,9 +25,26 @@ export default function BugHistoryModal({ applicationId, bug, onClose, onSuccess
   });
 
   useEffect(() => {
+    if (!applicationId) {
+      const fetchApps = async () => {
+        try {
+          const res = await api.get('/apps');
+          setApps(res.data || []);
+          if (!bug && res.data?.length > 0) {
+            setForm(f => ({ ...f, applicationId: res.data[0].id }));
+          }
+        } catch {
+          // fail silently
+        }
+      };
+      fetchApps();
+    }
+  }, [applicationId, bug]);
+
+  useEffect(() => {
     if (bug) {
       setForm({
-        applicationId: bug.applicationId || applicationId,
+        applicationId: bug.applicationId || applicationId || '',
         description: bug.description || '',
         reportedBy: bug.reportedBy || user?.name || '',
         causesAndTroubleshoot: bug.causesAndTroubleshoot || '',
@@ -35,7 +53,7 @@ export default function BugHistoryModal({ applicationId, bug, onClose, onSuccess
       });
     } else {
       setForm({
-        applicationId,
+        applicationId: applicationId || (apps[0]?.id || ''),
         description: '',
         reportedBy: user?.name || '',
         causesAndTroubleshoot: '',
@@ -43,7 +61,7 @@ export default function BugHistoryModal({ applicationId, bug, onClose, onSuccess
         screenshots: []
       });
     }
-  }, [bug, applicationId, user]);
+  }, [bug, applicationId, user, apps]);
 
   const handleChange = (e) => setForm(f => ({ ...f, [e.target.name]: e.target.value }));
   const handleDescChange = (content) => setForm(f => ({ ...f, description: content }));
@@ -137,6 +155,26 @@ export default function BugHistoryModal({ applicationId, bug, onClose, onSuccess
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
           <div className="modal-body" style={{ overflowY: 'auto', padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            
+            {/* App selection (only visible if applicationId is not fixed) */}
+            {!applicationId && (
+              <div className="form-group" style={{ margin: 0 }}>
+                <label className="form-label form-required">Aplikasi</label>
+                <select
+                  className="form-select"
+                  name="applicationId"
+                  value={form.applicationId}
+                  onChange={handleChange}
+                  required
+                >
+                  <option value="" disabled>-- Pilih Aplikasi --</option>
+                  {apps.map(app => (
+                    <option key={app.id} value={app.id}>{app.name}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
             {/* Top Row: Reported By & Status */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
               <div className="form-group" style={{ margin: 0 }}>

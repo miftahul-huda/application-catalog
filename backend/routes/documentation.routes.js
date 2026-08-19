@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { protect, approvedOnly } = require('../middleware/auth');
+const { protect, internalOnly } = require('../middleware/auth');
 const { Documentation, User, Application } = require('../models');
 
 const genDocumentationId = async (applicationId) => {
@@ -17,7 +17,7 @@ const genDocumentationId = async (applicationId) => {
 };
 
 // GET all documentations for an app
-router.get('/', protect, approvedOnly, async (req, res) => {
+router.get('/', protect, internalOnly, async (req, res) => {
   const { appId, search } = req.query;
   const { Op } = require('sequelize');
   
@@ -47,7 +47,7 @@ router.get('/', protect, approvedOnly, async (req, res) => {
 });
 
 // GET single documentation
-router.get('/:id', protect, approvedOnly, async (req, res) => {
+router.get('/:id', protect, internalOnly, async (req, res) => {
   try {
     const doc = await Documentation.findByPk(req.params.id, {
       include: [{ model: User, as: 'creator', attributes: ['id', 'name', 'email', 'picture'] }]
@@ -60,7 +60,7 @@ router.get('/:id', protect, approvedOnly, async (req, res) => {
 });
 
 // POST create documentation
-router.post('/', protect, approvedOnly, async (req, res) => {
+router.post('/', protect, internalOnly, async (req, res) => {
   try {
     const { applicationId, title, content } = req.body;
     const id = await genDocumentationId(applicationId);
@@ -81,7 +81,7 @@ router.post('/', protect, approvedOnly, async (req, res) => {
 });
 
 // PUT update documentation
-router.put('/:id', protect, approvedOnly, async (req, res) => {
+router.put('/:id', protect, internalOnly, async (req, res) => {
   try {
     const doc = await Documentation.findByPk(req.params.id);
     if (!doc) return res.status(404).json({ message: 'Documentation not found' });
@@ -99,7 +99,7 @@ router.put('/:id', protect, approvedOnly, async (req, res) => {
 });
 
 // DELETE documentation
-router.delete('/:id', protect, approvedOnly, async (req, res) => {
+router.delete('/:id', protect, internalOnly, async (req, res) => {
   try {
     const doc = await Documentation.findByPk(req.params.id);
     if (!doc) return res.status(404).json({ message: 'Documentation not found' });

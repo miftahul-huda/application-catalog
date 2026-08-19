@@ -2,7 +2,7 @@ import { Outlet, NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import {
   LayoutDashboard, Layers, LayoutGrid, BookOpen, GitBranch, Clock, Users, Database,
-  LogOut, ChevronRight, Palette, Check, X
+  LogOut, ChevronRight, Palette, Check, X, Bug
 } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { useUI } from '../contexts/UIContext';
@@ -70,6 +70,10 @@ export default function Layout() {
 
   const currentTheme = user?.theme || 'dark';
 
+  const visibleNavItems = user?.role === 'External'
+    ? [{ to: '/bugs', icon: Bug, label: 'Bug Reports' }]
+    : navItems;
+
   useEffect(() => {
     const handler = (e) => {
       if (themePickerRef.current && !themePickerRef.current.contains(e.target)) {
@@ -129,7 +133,7 @@ export default function Layout() {
         {/* Nav */}
         <nav className="sidebar-nav">
           <div className="sidebar-section-label">Menu</div>
-          {navItems.map(item => (
+          {visibleNavItems.map(item => (
             <NavLink
               key={item.to}
               to={item.to}

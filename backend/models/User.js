@@ -19,7 +19,7 @@ const User = sequelize.define('User', {
     type: DataTypes.STRING
   },
   role: {
-    type: DataTypes.ENUM('Admin', 'User'),
+    type: DataTypes.STRING,
     defaultValue: 'User'
   },
   isApproved: {

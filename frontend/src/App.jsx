@@ -10,6 +10,7 @@ import ApplicationsPage from './pages/ApplicationsPage';
 import DocumentationsPage from './pages/DocumentationsPage';
 import SourceCodesPage from './pages/SourceCodesPage';
 import BacklogsPage from './pages/BacklogsPage';
+import BugsPage from './pages/BugsPage';
 import AdminPage from './pages/AdminPage';
 import MasterDataPage from './pages/MasterDataPage';
 import PendingPage from './pages/PendingPage';
@@ -31,6 +32,18 @@ const PublicRoute = ({ children }) => {
   return children;
 };
 
+const InternalRoute = ({ children }) => {
+  const { user } = useAuth();
+  if (user && user.role === 'External') return <Navigate to="/bugs" replace />;
+  return children;
+};
+
+const HomeRoute = () => {
+  const { user } = useAuth();
+  if (user && user.role === 'External') return <Navigate to="/bugs" replace />;
+  return <DashboardPage />;
+};
+
 export default function App() {
   return (
     <BrowserRouter>
@@ -38,14 +51,15 @@ export default function App() {
         <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
         <Route path="/pending" element={<PendingPage />} />
         <Route path="/" element={<PrivateRoute><Layout /></PrivateRoute>}>
-          <Route index element={<DashboardPage />} />
-          <Route path="app-groups" element={<AppGroupsPage />} />
-          <Route path="app-groups/:id" element={<AppGroupDetailPage />} />
-          <Route path="applications" element={<ApplicationsPage />} />
-          <Route path="documentations" element={<DocumentationsPage />} />
-          <Route path="source-codes" element={<SourceCodesPage />} />
-          <Route path="backlogs" element={<BacklogsPage />} />
-          <Route path="apps/:id" element={<AppDetailPage />} />
+          <Route index element={<HomeRoute />} />
+          <Route path="bugs" element={<BugsPage />} />
+          <Route path="app-groups" element={<InternalRoute><AppGroupsPage /></InternalRoute>} />
+          <Route path="app-groups/:id" element={<InternalRoute><AppGroupDetailPage /></InternalRoute>} />
+          <Route path="applications" element={<InternalRoute><ApplicationsPage /></InternalRoute>} />
+          <Route path="documentations" element={<InternalRoute><DocumentationsPage /></InternalRoute>} />
+          <Route path="source-codes" element={<InternalRoute><SourceCodesPage /></InternalRoute>} />
+          <Route path="backlogs" element={<InternalRoute><BacklogsPage /></InternalRoute>} />
+          <Route path="apps/:id" element={<InternalRoute><AppDetailPage /></InternalRoute>} />
           <Route path="admin" element={<PrivateRoute adminOnly><AdminPage /></PrivateRoute>} />
           <Route path="master" element={<PrivateRoute adminOnly><MasterDataPage /></PrivateRoute>} />
         </Route>

@@ -15,6 +15,18 @@ const getApps = async (req, res) => {
     ];
   }
 
+  // Restrict for External users
+  if (req.user && req.user.role === 'External') {
+    const { ExternalUserApplication } = require('../models');
+    const { Op } = require('sequelize');
+    const allowed = await ExternalUserApplication.findAll({
+      where: { userId: req.user.id },
+      attributes: ['applicationId']
+    });
+    const allowedIds = allowed.map(a => a.applicationId);
+    where.id = { [Op.in]: allowedIds };
+  }
+
   try {
     const apps = await Application.findAll({
       where,
@@ -33,6 +45,16 @@ const getApps = async (req, res) => {
 
 const getApp = async (req, res) => {
   try {
+    if (req.user && req.user.role === 'External') {
+      const { ExternalUserApplication } = require('../models');
+      const hasAccess = await ExternalUserApplication.findOne({
+        where: { userId: req.user.id, applicationId: req.params.id }
+      });
+      if (!hasAccess) {
+        return res.status(403).json({ message: 'Forbidden. You do not have access to this application.' });
+      }
+    }
+
     console.log('GET /api/apps/:id - ID:', req.params.id);
     const app = await Application.findByPk(req.params.id, {
       include: [

@@ -1,17 +1,17 @@
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
-const { protect, approvedOnly } = require('../middleware/auth');
+const { protect, internalOnly } = require('../middleware/auth');
 const { getBacklogs, createBacklog, uploadBacklogAsset, backlogInclude } = require('../controllers/backlog.controller');
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 50 * 1024 * 1024 } });
 
-router.get('/', protect, approvedOnly, getBacklogs);
-router.post('/', protect, approvedOnly, createBacklog);
-router.post('/:backlogId/assets', protect, approvedOnly, upload.single('file'), uploadBacklogAsset);
+router.get('/', protect, internalOnly, getBacklogs);
+router.post('/', protect, internalOnly, createBacklog);
+router.post('/:backlogId/assets', protect, internalOnly, upload.single('file'), uploadBacklogAsset);
 
 // PATCH: update backlog fields, manage assignees & log status changes
-router.patch('/:id', protect, approvedOnly, async (req, res) => {
+router.patch('/:id', protect, internalOnly, async (req, res) => {
   try {
     const { Backlog, BacklogAssignee, BacklogStatusHistory } = require('../models');
     const backlog = await Backlog.findByPk(req.params.id);
@@ -49,7 +49,7 @@ router.patch('/:id', protect, approvedOnly, async (req, res) => {
 });
 
 // DELETE backlog
-router.delete('/:id', protect, approvedOnly, async (req, res) => {
+router.delete('/:id', protect, internalOnly, async (req, res) => {
   try {
     const { Backlog } = require('../models');
     const backlog = await Backlog.findByPk(req.params.id);

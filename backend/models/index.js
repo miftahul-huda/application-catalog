@@ -16,6 +16,7 @@ const Asset = require('./Asset');
 const SourceCode = require('./SourceCode');
 const BugHistory = require('./BugHistory');
 const Documentation = require('./Documentation');
+const ExternalUserApplication = require('./ExternalUserApplication');
 
 // Associations
 
@@ -69,6 +70,12 @@ Application.hasMany(Documentation, { foreignKey: 'applicationId', as: 'documenta
 Documentation.belongsTo(Application, { foreignKey: 'applicationId' });
 Documentation.belongsTo(User, { foreignKey: 'createdBy', as: 'creator' });
 
+// ExternalUserApplication
+User.belongsToMany(Application, { through: ExternalUserApplication, foreignKey: 'userId', otherKey: 'applicationId', as: 'allowedApplications' });
+Application.belongsToMany(User, { through: ExternalUserApplication, foreignKey: 'applicationId', otherKey: 'userId', as: 'externalUsers' });
+ExternalUserApplication.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+ExternalUserApplication.belongsTo(Application, { foreignKey: 'applicationId', as: 'application' });
+
 const models = {
   sequelize,
   User,
@@ -87,7 +94,8 @@ const models = {
   Asset,
   SourceCode,
   BugHistory,
-  Documentation
+  Documentation,
+  ExternalUserApplication
 };
 
 module.exports = models;

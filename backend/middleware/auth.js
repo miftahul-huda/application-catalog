@@ -47,4 +47,12 @@ const approvedOnly = (req, res, next) => {
   }
 };
 
-module.exports = { protect, adminOnly, approvedOnly };
+const internalOnly = (req, res, next) => {
+  if (req.user && req.user.role !== 'External') {
+    next();
+  } else {
+    res.status(403).json({ message: 'Forbidden: Access restricted for external users' });
+  }
+};
+
+module.exports = { protect, adminOnly, approvedOnly, internalOnly };

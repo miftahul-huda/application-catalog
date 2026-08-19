@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { protect, approvedOnly } = require('../middleware/auth');
+const { protect, internalOnly } = require('../middleware/auth');
 const { Deployment } = require('../models');
 
 const genDeploymentId = async (applicationId) => {
@@ -16,7 +16,7 @@ const genDeploymentId = async (applicationId) => {
   return `${prefix}-${String(next).padStart(3, '0')}`;
 };
 
-router.get('/', protect, approvedOnly, async (req, res) => {
+router.get('/', protect, internalOnly, async (req, res) => {
   const { appId } = req.query;
   try {
     const deployments = await Deployment.findAll({
@@ -29,7 +29,7 @@ router.get('/', protect, approvedOnly, async (req, res) => {
   }
 });
 
-router.post('/', protect, approvedOnly, async (req, res) => {
+router.post('/', protect, internalOnly, async (req, res) => {
   try {
     const id = await genDeploymentId(req.body.applicationId);
     const deployment = await Deployment.create({ ...req.body, id });
@@ -39,7 +39,7 @@ router.post('/', protect, approvedOnly, async (req, res) => {
   }
 });
 
-router.put('/:id', protect, approvedOnly, async (req, res) => {
+router.put('/:id', protect, internalOnly, async (req, res) => {
   try {
     const deployment = await Deployment.findByPk(req.params.id);
     if (!deployment) return res.status(404).json({ message: 'Deployment not found' });
@@ -50,7 +50,7 @@ router.put('/:id', protect, approvedOnly, async (req, res) => {
   }
 });
 
-router.delete('/:id', protect, approvedOnly, async (req, res) => {
+router.delete('/:id', protect, internalOnly, async (req, res) => {
   try {
     const deployment = await Deployment.findByPk(req.params.id);
     if (!deployment) return res.status(404).json({ message: 'Deployment not found' });

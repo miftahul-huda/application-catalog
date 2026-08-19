@@ -1,16 +1,16 @@
 const express = require('express');
 const router = express.Router();
-const { protect, approvedOnly } = require('../middleware/auth');
+const { protect, internalOnly } = require('../middleware/auth');
 const { getGroups, getGroup, createGroup, updateGroup, duplicateGroup } = require('../controllers/app-group.controller');
 
-router.get('/', protect, approvedOnly, getGroups);
-router.get('/:id', protect, approvedOnly, getGroup);
-router.post('/', protect, approvedOnly, createGroup);
-router.put('/:id', protect, approvedOnly, updateGroup);
-router.post('/:id/duplicate', protect, approvedOnly, duplicateGroup);
+router.get('/', protect, internalOnly, getGroups);
+router.get('/:id', protect, internalOnly, getGroup);
+router.post('/', protect, internalOnly, createGroup);
+router.put('/:id', protect, internalOnly, updateGroup);
+router.post('/:id/duplicate', protect, internalOnly, duplicateGroup);
 
 // Add document to group
-router.post('/:id/documents', protect, approvedOnly, async (req, res) => {
+router.post('/:id/documents', protect, internalOnly, async (req, res) => {
   try {
     const { ApplicationGroup } = require('../models');
     const group = await ApplicationGroup.findByPk(req.params.id);
@@ -24,7 +24,7 @@ router.post('/:id/documents', protect, approvedOnly, async (req, res) => {
 });
 
 // Remove document from group by index
-router.delete('/:id/documents/:index', protect, approvedOnly, async (req, res) => {
+router.delete('/:id/documents/:index', protect, internalOnly, async (req, res) => {
   try {
     const { ApplicationGroup } = require('../models');
     const group = await ApplicationGroup.findByPk(req.params.id);
