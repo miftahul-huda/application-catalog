@@ -5,7 +5,18 @@ let transporter = null;
 const getTransporter = async () => {
   if (transporter) return transporter;
 
-  if (process.env.SMTP_HOST) {
+  if (process.env.GMAIL_OAUTH_CLIENT_ID) {
+    transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        type: 'OAuth2',
+        user: process.env.SMTP_USER || process.env.GMAIL_USER,
+        clientId: process.env.GMAIL_OAUTH_CLIENT_ID,
+        clientSecret: process.env.GMAIL_OAUTH_CLIENT_SECRET,
+        refreshToken: process.env.GMAIL_OAUTH_REFRESH_TOKEN
+      }
+    });
+  } else if (process.env.SMTP_HOST) {
     transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST,
       port: process.env.SMTP_PORT || 587,
