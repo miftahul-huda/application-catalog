@@ -79,10 +79,14 @@ router.post('/', protect, approvedOnly, async (req, res) => {
     // Send email to developers if reported by an external user
     if (req.user.role === 'External') {
       try {
-        const { Application, ApplicationDeveloper } = require('../models');
+        const { Application, ApplicationDeveloper, User } = require('../models');
         const { sendErrorNotification } = require('../utils/mailer');
         const app = await Application.findByPk(applicationId, {
-          include: [{ model: ApplicationDeveloper, as: 'developers' }]
+          include: [{ 
+            model: ApplicationDeveloper, 
+            as: 'developers',
+            include: [{ model: User, as: 'user' }]
+          }]
         });
         if (app && app.developers && app.developers.length > 0) {
           await sendErrorNotification(app.developers, bug, app.name);

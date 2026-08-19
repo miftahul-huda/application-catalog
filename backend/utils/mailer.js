@@ -1,27 +1,48 @@
 const nodemailer = require('nodemailer');
 
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: process.env.SMTP_PORT || 587,
-  secure: process.env.SMTP_SECURE === 'true',
-  auth: process.env.SMTP_USER && process.env.SMTP_PASS ? {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS
-  } : undefined
-});
+let transporter = null;
+
+const getTransporter = async () => {
+  if (transporter) return transporter;
+
+  if (process.env.SMTP_HOST) {
+    transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: process.env.SMTP_PORT || 587,
+      secure: process.env.SMTP_SECURE === 'true',
+      auth: process.env.SMTP_USER && process.env.SMTP_PASS ? {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS
+      } : undefined
+    });
+  } else {
+    // Fallback to Ethereal Email for testing if no SMTP config is provided
+    console.log('No SMTP config found. Generating Ethereal test account...');
+    const testAccount = await nodemailer.createTestAccount();
+    transporter = nodemailer.createTransport({
+      host: "smtp.ethereal.email",
+      port: 587,
+      secure: false,
+      auth: {
+        user: testAccount.user,
+        pass: testAccount.pass,
+      },
+    });
+  }
+
+  return transporter;
+};
 
 const sendErrorNotification = async (developers, bugDetails, appName) => {
-  if (!process.env.SMTP_HOST) {
-    console.log('SMTP config missing, skipping email notification.');
-    console.log('Would have sent to:', developers.map(d => d.email).filter(Boolean).join(', '));
+  const mailList = developers.map(d => d.email || (d.user && d.user.email)).filter(Boolean);
+  
+  if (mailList.length === 0) {
+    console.log('No developer emails found to notify.');
     return;
   }
-  
-  const mailList = developers.map(d => d.email).filter(Boolean);
-  if (mailList.length === 0) return;
 
   const mailOptions = {
-    from: `"App Catalog" <${process.env.SMTP_USER || 'noreply@example.com'}>`,
+    from: `"AppCat Alerts" <${process.env.SMTP_USER || 'alerts@appcat.local'}>`,
     to: mailList.join(','),
     subject: `[Bug Report] New Error in ${appName}`,
     html: `
@@ -48,8 +69,13 @@ const sendErrorNotification = async (developers, bugDetails, appName) => {
   };
 
   try {
-    await transporter.sendMail(mailOptions);
+    const tp = await getTransporter();
+    const info = await tp.sendMail(mailOptions);
     console.log(`Error notification email sent to ${mailList.length} developer(s).`);
+    
+    if (!process.env.SMTP_HOST) {
+      console.log('Preview URL: %s', nodemailer.getTestMessageUrl(info));
+    }
   } catch (err) {
     console.error('Failed to send error notification email:', err);
   }
