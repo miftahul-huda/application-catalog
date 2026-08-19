@@ -44,7 +44,7 @@ const getTransporter = async () => {
   return transporter;
 };
 
-const sendErrorNotification = async (developers, bugDetails, appName) => {
+const sendErrorNotification = async (developers, bugDetails, appName, reporterEmail) => {
   const mailList = developers.map(d => d.email || (d.user && d.user.email)).filter(Boolean);
   
   if (mailList.length === 0) {
@@ -53,7 +53,7 @@ const sendErrorNotification = async (developers, bugDetails, appName) => {
   }
 
   const mailOptions = {
-    from: `"AppCat Alerts" <${process.env.SMTP_USER || 'alerts@appcat.local'}>`,
+    from: `"AppCat Alerts" <${process.env.GMAIL_USER || process.env.SMTP_USER || 'alerts@appcat.local'}>`,
     to: mailList.join(','),
     subject: `[Bug Report] New Error in ${appName}`,
     html: `
@@ -62,12 +62,16 @@ const sendErrorNotification = async (developers, bugDetails, appName) => {
         <p>A new error has been reported by an external user. Details are as follows:</p>
         <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
           <tr>
-            <td style="padding: 8px; border: 1px solid #ddd; font-weight: bold; width: 120px;">Application</td>
+            <td style="padding: 8px; border: 1px solid #ddd; font-weight: bold; width: 120px;">Error ID</td>
+            <td style="padding: 8px; border: 1px solid #ddd;">${bugDetails.id || 'N/A'}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px; border: 1px solid #ddd; font-weight: bold;">Application</td>
             <td style="padding: 8px; border: 1px solid #ddd;">${appName}</td>
           </tr>
           <tr>
             <td style="padding: 8px; border: 1px solid #ddd; font-weight: bold;">Reported By</td>
-            <td style="padding: 8px; border: 1px solid #ddd;">${bugDetails.reportedBy || 'Unknown User'}</td>
+            <td style="padding: 8px; border: 1px solid #ddd;">${bugDetails.reportedBy || 'Unknown User'} ${reporterEmail ? `(${reporterEmail})` : ''}</td>
           </tr>
           <tr>
             <td style="padding: 8px; border: 1px solid #ddd; font-weight: bold;">Description</td>

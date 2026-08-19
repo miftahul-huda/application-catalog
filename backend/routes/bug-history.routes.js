@@ -89,7 +89,7 @@ router.post('/', protect, approvedOnly, async (req, res) => {
           }]
         });
         if (app && app.developers && app.developers.length > 0) {
-          await sendErrorNotification(app.developers, bug, app.name);
+          await sendErrorNotification(app.developers, bug, app.name, req.user.email);
         }
       } catch (err) {
         console.error('Failed to notify developers:', err);
