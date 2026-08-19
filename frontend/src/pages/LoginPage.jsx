@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useUI } from '../contexts/UIContext';
-import { Layers, Shield, Clock, Zap } from 'lucide-react';
+import { Shield, Clock, Zap } from 'lucide-react';
+import catLogo from '../assets/cat.png';
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -177,11 +178,12 @@ export default function LoginPage() {
               borderRadius: '12px',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               boxShadow: '0 4px 20px rgba(124,141,255,0.35), 0 0 0 1px rgba(255,255,255,0.12)',
+              overflow: 'hidden'
             }}>
-              <Layers size={22} color="white" />
+              <img src={catLogo} alt="AppCat Logo" style={{ width: '26px', height: '26px', objectFit: 'contain' }} />
             </div>
             <div>
-              <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'white', letterSpacing: '-0.02em' }}>AppCatalog</div>
+              <div style={{ fontSize: '1.2rem', fontWeight: 800, color: 'white', letterSpacing: '-0.02em' }}>AppCat</div>
               <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.35)', fontWeight: 400, letterSpacing: '0.04em' }}>APPLICATION REGISTRY</div>
             </div>
           </div>

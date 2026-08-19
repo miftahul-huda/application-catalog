@@ -7,6 +7,7 @@ import {
 import { useState, useRef, useEffect } from 'react';
 import { useUI } from '../contexts/UIContext';
 import { motion, AnimatePresence } from 'framer-motion';
+import catLogo from '../assets/cat.png';
 
 const navItems = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard', exact: true },
@@ -122,11 +123,11 @@ export default function Layout() {
       <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
         {/* Logo */}
         <div className="sidebar-logo">
-          <div className="sidebar-logo-icon">
-            <Layers size={18} color="white" />
+          <div className="sidebar-logo-icon" style={{ overflow: 'hidden' }}>
+            <img src={catLogo} alt="AppCat Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
           </div>
           <div>
-            <div className="sidebar-logo-text">AppCatalog</div>
+            <div className="sidebar-logo-text">AppCat</div>
             <div className="sidebar-logo-sub">Application Registry</div>
           </div>
         </div>
@@ -192,7 +193,7 @@ export default function Layout() {
         <header className="topbar">
           {/* Breadcrumb */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
-            <span style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', fontWeight: 500 }}>AppCatalog</span>
+            <span style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', fontWeight: 500 }}>AppCat</span>
             {location.pathname !== '/' && (
               <>
                 <ChevronRight size={13} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
