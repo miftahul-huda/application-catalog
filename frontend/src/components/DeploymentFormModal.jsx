@@ -37,17 +37,17 @@ function serializeDotEnv(vars) {
     .join('\n');
 }
 
-export default function DeploymentFormModal({ applicationId, appName, onClose, onSuccess }) {
+export default function DeploymentFormModal({ applicationId, appName, deployment, onClose, onSuccess }) {
   const { toast } = useUI();
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
     applicationId,
-    title: appName || '',
-    url: '',
-    platformId: '',
-    environmentId: '',
-    instructions: '',
-    testingInstructions: '',
+    title: deployment ? (deployment.title || '') : (appName || ''),
+    url: deployment ? (deployment.url || '') : '',
+    platformId: deployment ? (deployment.platformId || '') : '',
+    environmentId: deployment ? (deployment.environmentId || '') : '',
+    instructions: deployment ? (deployment.instructions || '') : '',
+    testingInstructions: deployment ? (deployment.testingInstructions || '') : '',
   });
 
   const [platforms, setPlatforms] = useState([]);
@@ -59,13 +59,17 @@ export default function DeploymentFormModal({ applicationId, appName, onClose, o
   }, []);
 
   useEffect(() => {
-    if (appName && !form.title) {
+    if (appName && !form.title && !deployment) {
       setForm(f => ({ ...f, title: appName }));
     }
-  }, [appName]);
+  }, [appName, deployment]);
 
   // Env Vars state
-  const [envVars, setEnvVars] = useState([{ key: '', value: '' }]);
+  const [envVars, setEnvVars] = useState(
+    deployment && Array.isArray(deployment.envVars) && deployment.envVars.length > 0
+      ? deployment.envVars
+      : [{ key: '', value: '' }]
+  );
   const [showValues, setShowValues] = useState(false);
   const [pasteMode, setPasteMode] = useState(false);
   const [pasteText, setPasteText] = useState('');
@@ -120,8 +124,13 @@ export default function DeploymentFormModal({ applicationId, appName, onClose, o
     setLoading(true);
     try {
       const filtered = envVars.filter(v => v.key.trim());
-      await api.post('/deployments', { ...form, envVars: filtered });
-      toast('Deployment berhasil ditambahkan', 'success');
+      if (deployment) {
+        await api.put(`/deployments/${deployment.id}`, { ...form, envVars: filtered });
+        toast('Deployment berhasil diperbarui', 'success');
+      } else {
+        await api.post('/deployments', { ...form, envVars: filtered });
+        toast('Deployment berhasil ditambahkan', 'success');
+      }
       onSuccess();
     } catch (err) {
       toast(err.response?.data?.message || 'Operasi gagal', 'error');
@@ -142,7 +151,7 @@ export default function DeploymentFormModal({ applicationId, appName, onClose, o
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal modal-lg" onClick={e => e.stopPropagation()} style={{ width: 820, maxHeight: '92vh', display: 'flex', flexDirection: 'column' }}>
         <div className="modal-header">
-          <span className="modal-title">Tambah Deployment</span>
+          <span className="modal-title">{deployment ? 'Edit Deployment' : 'Tambah Deployment'}</span>
           <button className="btn btn-ghost btn-icon btn-sm" onClick={onClose}><X size={18} /></button>
         </div>
 

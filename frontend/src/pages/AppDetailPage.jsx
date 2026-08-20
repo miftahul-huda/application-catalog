@@ -110,6 +110,7 @@ export default function AppDetailPage() {
   const [showEditApp, setShowEditApp] = useState(false);
   const [showBacklogForm, setShowBacklogForm] = useState(false);
   const [showDeployForm, setShowDeployForm] = useState(false);
+  const [editDeployment, setEditDeployment] = useState(null);
   const [showDevPicker, setShowDevPicker] = useState(false);
   const [showTechStackForm, setShowTechStackForm] = useState(false);
 
@@ -1248,6 +1249,14 @@ export default function AppDetailPage() {
                         <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
                           <button
                             className="btn btn-secondary btn-sm"
+                            style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.8rem' }}
+                            onClick={() => { setEditDeployment(d); setShowDeployForm(true); }}
+                            title="Edit Deployment"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            className="btn btn-secondary btn-sm"
                             style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.8rem', fontFamily: 'var(--font-mono)' }}
                             onClick={() => setEnvVarsTarget({ deploymentId: d.id, vars: Array.isArray(d.envVars) ? d.envVars : [] })}
                             title="Edit Environment Variables"
@@ -1416,8 +1425,9 @@ export default function AppDetailPage() {
         <DeploymentFormModal
           applicationId={id}
           appName={app?.name}
-          onClose={() => setShowDeployForm(false)}
-          onSuccess={() => { setShowDeployForm(false); load(); }}
+          deployment={editDeployment}
+          onClose={() => { setShowDeployForm(false); setEditDeployment(null); }}
+          onSuccess={() => { setShowDeployForm(false); setEditDeployment(null); load(); }}
         />
       )}
       {showDevPicker && (
