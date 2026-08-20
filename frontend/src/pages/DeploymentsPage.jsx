@@ -1,11 +1,12 @@
 import { useEffect, useState, useCallback } from 'react';
-import { Search, Server, ExternalLink, Calendar, AppWindow, Globe, Eye } from 'lucide-react';
+import { Search, Server, ExternalLink, Calendar, AppWindow, Globe, Eye, Edit, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
 import { useUI } from '../contexts/UIContext';
+import DeploymentFormModal from '../components/DeploymentFormModal';
 
 export default function DeploymentsPage() {
-  const { toast } = useUI();
+  const { toast, confirm } = useUI();
   const [deployments, setDeployments] = useState([]);
   const [apps, setApps] = useState([]);
   const [environments, setEnvironments] = useState([]);
@@ -15,6 +16,10 @@ export default function DeploymentsPage() {
   const [search, setSearch] = useState('');
   const [appId, setAppId] = useState('');
   const [environmentId, setEnvironmentId] = useState('');
+
+  // Modals state
+  const [showEditForm, setShowEditForm] = useState(false);
+  const [activeDeployment, setActiveDeployment] = useState(null);
 
   // Fetch apps for dropdown
   const fetchApps = useCallback(async () => {
@@ -66,6 +71,18 @@ export default function DeploymentsPage() {
 
     return () => clearTimeout(delayDebounceFn);
   }, [search, appId, environmentId, fetchDeployments]);
+
+  const handleDelete = (id) => {
+    confirm('Hapus Deployment', 'Apakah Anda yakin ingin menghapus data deployment ini?', async () => {
+      try {
+        await api.delete(`/deployments/${id}`);
+        toast('Deployment berhasil dihapus', 'success');
+        fetchDeployments();
+      } catch {
+        toast('Gagal menghapus deployment', 'error');
+      }
+    }, 'danger');
+  };
 
   const activeFilters = [search, appId, environmentId].filter(Boolean).length;
 
@@ -253,13 +270,31 @@ export default function DeploymentsPage() {
                       </div>
                     </td>
                     <td style={{ padding: '14px 16px', textAlign: 'right' }}>
-                      <Link
-                        to={`/apps/${d.applicationId}`}
-                        className="btn btn-secondary btn-sm"
-                        style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '5px 10px', fontSize: '0.8rem' }}
-                      >
-                        <Eye size={13} /> Detail
-                      </Link>
+                      <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end', alignItems: 'center' }}>
+                        <button
+                          className="btn btn-secondary btn-sm"
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '5px 10px', fontSize: '0.8rem' }}
+                          onClick={() => { setActiveDeployment(d); setShowEditForm(true); }}
+                          title="Edit Deployment"
+                        >
+                          <Edit size={13} /> Edit
+                        </button>
+                        <Link
+                          to={`/apps/${d.applicationId}`}
+                          className="btn btn-secondary btn-sm"
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '5px 10px', fontSize: '0.8rem' }}
+                        >
+                          <Eye size={13} /> Detail
+                        </Link>
+                        <button
+                          className="btn btn-ghost btn-icon btn-sm"
+                          style={{ width: '30px', height: '30px', padding: 0 }}
+                          onClick={() => handleDelete(d.id)}
+                          title="Hapus Deployment"
+                        >
+                          <Trash2 size={14} color="var(--accent-danger)" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -268,6 +303,16 @@ export default function DeploymentsPage() {
           </div>
         )}
       </div>
+
+      {showEditForm && activeDeployment && (
+        <DeploymentFormModal
+          applicationId={activeDeployment.applicationId}
+          appName={activeDeployment.Application?.name}
+          deployment={activeDeployment}
+          onClose={() => { setShowEditForm(false); setActiveDeployment(null); }}
+          onSuccess={() => { setShowEditForm(false); setActiveDeployment(null); fetchDeployments(); }}
+        />
+      )}
     </div>
   );
 }
