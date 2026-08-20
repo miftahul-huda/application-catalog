@@ -11,6 +11,7 @@ import DocumentationsPage from './pages/DocumentationsPage';
 import SourceCodesPage from './pages/SourceCodesPage';
 import BacklogsPage from './pages/BacklogsPage';
 import ErrorReportsPage from './pages/ErrorReportsPage';
+import DeploymentsPage from './pages/DeploymentsPage';
 import AdminPage from './pages/AdminPage';
 import MasterDataPage from './pages/MasterDataPage';
 import PendingPage from './pages/PendingPage';
@@ -56,6 +57,7 @@ export default function App() {
           <Route path="app-groups" element={<InternalRoute><AppGroupsPage /></InternalRoute>} />
           <Route path="app-groups/:id" element={<InternalRoute><AppGroupDetailPage /></InternalRoute>} />
           <Route path="applications" element={<InternalRoute><ApplicationsPage /></InternalRoute>} />
+          <Route path="deployments" element={<InternalRoute><DeploymentsPage /></InternalRoute>} />
           <Route path="documentations" element={<InternalRoute><DocumentationsPage /></InternalRoute>} />
           <Route path="source-codes" element={<InternalRoute><SourceCodesPage /></InternalRoute>} />
           <Route path="backlogs" element={<InternalRoute><BacklogsPage /></InternalRoute>} />

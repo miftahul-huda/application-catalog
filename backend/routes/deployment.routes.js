@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { protect, internalOnly } = require('../middleware/auth');
-const { Deployment, DeploymentPlatform, DeploymentEnvironment } = require('../models');
+const { Deployment, DeploymentPlatform, DeploymentEnvironment, Application } = require('../models');
 
 const genDeploymentId = async (applicationId) => {
   const { Op } = require('sequelize');
@@ -17,13 +17,32 @@ const genDeploymentId = async (applicationId) => {
 };
 
 router.get('/', protect, internalOnly, async (req, res) => {
-  const { appId } = req.query;
+  const { appId, environmentId, search } = req.query;
+  const { Op } = require('sequelize');
+  
+  const where = {};
+  if (appId) {
+    where.applicationId = appId;
+  }
+  if (environmentId) {
+    where.environmentId = environmentId;
+  }
+  if (search) {
+    where[Op.or] = [
+      { id: { [Op.iLike]: `%${search}%` } },
+      { title: { [Op.iLike]: `%${search}%` } },
+      { url: { [Op.iLike]: `%${search}%` } },
+      { instructions: { [Op.iLike]: `%${search}%` } }
+    ];
+  }
+
   try {
     const deployments = await Deployment.findAll({
-      where: appId ? { applicationId: appId } : {},
+      where,
       include: [
         { model: DeploymentPlatform, as: 'platformData' },
-        { model: DeploymentEnvironment, as: 'environmentData' }
+        { model: DeploymentEnvironment, as: 'environmentData' },
+        { model: Application, attributes: ['id', 'name'] }
       ],
       order: [['createdAt', 'DESC']]
     });
