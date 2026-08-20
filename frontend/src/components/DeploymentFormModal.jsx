@@ -320,7 +320,7 @@ export default function DeploymentFormModal({ applicationId, appName, deployment
           <div className="modal-footer" style={{ marginTop: '12px' }}>
             <button type="button" className="btn btn-secondary" onClick={onClose}>Batal</button>
             <button type="submit" className="btn btn-primary" disabled={loading}>
-              {loading ? <><div className="spinner" style={{ width: 14, height: 14 }} /> Menyimpan...</> : 'Tambah Deployment'}
+              {loading ? <><div className="spinner" style={{ width: 14, height: 14 }} /> Menyimpan...</> : (deployment ? 'Ubah Deployment' : 'Tambah Deployment')}
             </button>
           </div>
         </form>
