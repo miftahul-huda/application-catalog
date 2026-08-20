@@ -49,7 +49,7 @@ gcloud run deploy application-catalog-api \
 Jalankan perintah berikut di dalam direktori `frontend`:
 ```bash
 # Ganti [BACKEND_URL] dengan URL backend yang didapat dari langkah sebelumnya
-gcloud run deploy application-catalog-web \
+gcloud run deploy appcat-web \
   --source . \
   --set-env-vars VITE_API_URL=[BACKEND_URL]/api \
   --region asia-southeast2 \
