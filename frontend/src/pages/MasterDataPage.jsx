@@ -8,6 +8,7 @@ import {
   Users as UserGroupIcon,
   BadgeCheck as CheckBadgeIcon,
   Server as ServerIcon,
+  Globe as GlobeIcon,
   Plus as PlusIcon,
   Pencil as PencilIcon,
   Trash as TrashIcon
@@ -21,6 +22,7 @@ const TABS = [
   { id: 'roles', label: 'Developer Roles', icon: UserGroupIcon, endpoint: '/master/roles' },
   { id: 'statuses', label: 'Backlog Statuses', icon: CheckBadgeIcon, endpoint: '/master/statuses' },
   { id: 'platforms', label: 'Deployment Platforms', icon: ServerIcon, endpoint: '/master/platforms' },
+  { id: 'environments', label: 'Environments', icon: GlobeIcon, endpoint: '/master/environments' },
 ];
 
 export default function MasterDataPage() {

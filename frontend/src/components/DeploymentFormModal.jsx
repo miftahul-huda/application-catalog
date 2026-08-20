@@ -45,14 +45,17 @@ export default function DeploymentFormModal({ applicationId, onClose, onSuccess 
     title: '',
     url: '',
     platformId: '',
+    environmentId: '',
     instructions: '',
     testingInstructions: '',
   });
 
   const [platforms, setPlatforms] = useState([]);
+  const [environments, setEnvironments] = useState([]);
 
   useEffect(() => {
     api.get('/master/platforms').then(res => setPlatforms(res.data)).catch(() => {});
+    api.get('/master/environments').then(res => setEnvironments(res.data)).catch(() => {});
   }, []);
 
   // Env Vars state
@@ -143,6 +146,14 @@ export default function DeploymentFormModal({ applicationId, onClose, onSuccess 
                 <select name="platformId" className="form-select" value={form.platformId} onChange={handleChange}>
                   <option value="">— Pilih Platform —</option>
                   {platforms.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                </select>
+              </div>
+
+              <div className="form-group" style={{ gridColumn: '1/-1' }}>
+                <label className="form-label">Environment</label>
+                <select name="environmentId" className="form-select" value={form.environmentId} onChange={handleChange}>
+                  <option value="">— Pilih Environment —</option>
+                  {environments.map(e => <option key={e.id} value={e.id}>{e.name}</option>)}
                 </select>
               </div>
 

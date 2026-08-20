@@ -18,6 +18,7 @@ const BugHistory = require('./BugHistory');
 const Documentation = require('./Documentation');
 const ExternalUserApplication = require('./ExternalUserApplication');
 const DeploymentPlatform = require('./DeploymentPlatform');
+const DeploymentEnvironment = require('./DeploymentEnvironment');
 
 // Associations
 
@@ -60,6 +61,8 @@ BacklogStatusHistory.belongsTo(User, { foreignKey: 'changedBy', as: 'changedByUs
 Deployment.belongsTo(Application, { foreignKey: 'applicationId' });
 Deployment.belongsTo(DeploymentPlatform, { foreignKey: 'platformId', as: 'platformData' });
 DeploymentPlatform.hasMany(Deployment, { foreignKey: 'platformId' });
+Deployment.belongsTo(DeploymentEnvironment, { foreignKey: 'environmentId', as: 'environmentData' });
+DeploymentEnvironment.hasMany(Deployment, { foreignKey: 'environmentId' });
 
 // SourceCode
 SourceCode.belongsTo(Application, { foreignKey: 'applicationId' });
@@ -99,7 +102,8 @@ const models = {
   BugHistory,
   Documentation,
   ExternalUserApplication,
-  DeploymentPlatform
+  DeploymentPlatform,
+  DeploymentEnvironment
 };
 
 module.exports = models;

@@ -7,7 +7,8 @@ const {
   ApplicationFunction,
   DeveloperRole,
   BacklogStatus,
-  DeploymentPlatform
+  DeploymentPlatform,
+  DeploymentEnvironment
 } = require('../models');
 
 // Generic CRUD factory
@@ -79,5 +80,12 @@ router.get('/platforms', protect, approvedOnly, platform.list);
 router.post('/platforms', protect, adminOnly, platform.create);
 router.put('/platforms/:id', protect, adminOnly, platform.update);
 router.delete('/platforms/:id', protect, adminOnly, platform.remove);
+
+// Deployment Environments
+const environment = crudFor(DeploymentEnvironment);
+router.get('/environments', protect, approvedOnly, environment.list);
+router.post('/environments', protect, adminOnly, environment.create);
+router.put('/environments/:id', protect, adminOnly, environment.update);
+router.delete('/environments/:id', protect, adminOnly, environment.remove);
 
 module.exports = router;

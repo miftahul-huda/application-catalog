@@ -1226,6 +1226,9 @@ export default function AppDetailPage() {
                             {(d.platformData?.name || d.platform) && (
                               <span className="badge badge-info">{d.platformData?.name || d.platform}</span>
                             )}
+                            {d.environmentData?.name && (
+                              <span className="badge badge-success">{d.environmentData.name}</span>
+                            )}
                             {Array.isArray(d.envVars) && d.envVars.length > 0 && (
                               <span
                                 className="badge badge-success"

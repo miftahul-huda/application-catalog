@@ -27,6 +27,10 @@ const Deployment = sequelize.define('Deployment', {
     type: DataTypes.INTEGER,
     allowNull: true
   },
+  environmentId: {
+    type: DataTypes.INTEGER,
+    allowNull: true
+  },
   envVars: {
     type: DataTypes.JSONB,
     defaultValue: []

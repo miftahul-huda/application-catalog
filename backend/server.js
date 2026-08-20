@@ -45,7 +45,7 @@ app.use((err, req, res, next) => {
 });
 
 const seedMasterData = async () => {
-  const { ApplicationProject, ApplicationCategory, ApplicationFunction, DeveloperRole, BacklogStatus, DeploymentPlatform } = require('./models');
+  const { ApplicationProject, ApplicationCategory, ApplicationFunction, DeveloperRole, BacklogStatus, DeploymentPlatform, DeploymentEnvironment } = require('./models');
   const projectCount = await ApplicationProject.count();
   if (projectCount === 0) {
     await ApplicationProject.bulkCreate([
@@ -83,6 +83,12 @@ const seedMasterData = async () => {
     await DeploymentPlatform.bulkCreate([
       { name: 'VM' }, { name: 'Managed VM Group' }, { name: 'Kubernetes' },
       { name: 'Docker Swarm' }, { name: 'Cloud Run' }, { name: 'App Engine' }
+    ]);
+  }
+  const envCount = await DeploymentEnvironment.count();
+  if (envCount === 0) {
+    await DeploymentEnvironment.bulkCreate([
+      { name: 'Development' }, { name: 'Staging' }, { name: 'Production' }
     ]);
   }
 };
