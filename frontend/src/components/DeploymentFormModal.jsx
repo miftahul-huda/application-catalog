@@ -159,7 +159,7 @@ export default function DeploymentFormModal({ applicationId, appName, deployment
           <div className="modal-body" style={{ overflowY: 'auto', flex: 1 }}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}>
 
-              <div className="form-group" style={{ gridColumn: '1/-1' }}>
+              <div className="form-group" style={{ gridColumn: 'span 1' }}>
                 <label className="form-label">Environment</label>
                 <select name="environmentId" className="form-select" value={form.environmentId} onChange={handleEnvironmentChange}>
                   <option value="">— Pilih Environment —</option>
@@ -167,17 +167,7 @@ export default function DeploymentFormModal({ applicationId, appName, deployment
                 </select>
               </div>
 
-              <div className="form-group" style={{ gridColumn: '1/-1' }}>
-                <label className="form-label">Title / Nama Deployment</label>
-                <input type="text" name="title" className="form-input" placeholder="Contoh: Production, Staging, QA" value={form.title} onChange={handleChange} />
-              </div>
-
-              <div className="form-group" style={{ gridColumn: '1/-1' }}>
-                <label className="form-label form-required">URL Deployment</label>
-                <input type="url" name="url" className="form-input" placeholder="https://myapp.staging.com" value={form.url} onChange={handleChange} required />
-              </div>
-
-              <div className="form-group" style={{ gridColumn: '1/-1' }}>
+              <div className="form-group" style={{ gridColumn: 'span 1' }}>
                 <label className="form-label">Platform</label>
                 <select name="platformId" className="form-select" value={form.platformId} onChange={handleChange}>
                   <option value="">— Pilih Platform —</option>
@@ -185,20 +175,30 @@ export default function DeploymentFormModal({ applicationId, appName, deployment
                 </select>
               </div>
 
+              <div className="form-group" style={{ gridColumn: 'span 1' }}>
+                <label className="form-label">Title / Nama Deployment</label>
+                <input type="text" name="title" className="form-input" placeholder="Contoh: Production, Staging, QA" value={form.title} onChange={handleChange} />
+              </div>
+
+              <div className="form-group" style={{ gridColumn: 'span 1' }}>
+                <label className="form-label form-required">URL Deployment</label>
+                <input type="url" name="url" className="form-input" placeholder="https://myapp.staging.com" value={form.url} onChange={handleChange} required />
+              </div>
+
               <div className="form-group" style={{ gridColumn: '1/-1' }}>
                 <label className="form-label">Cara Deployment</label>
                 <div style={{ background: 'var(--bg-card)', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--border-subtle)' }}>
-                  <ReactQuill theme="snow" value={form.instructions} onChange={(val) => handleEditorChange('instructions', val)} style={{ height: '160px' }} modules={quillModules} />
+                  <ReactQuill theme="snow" value={form.instructions} onChange={(val) => handleEditorChange('instructions', val)} style={{ height: '120px' }} modules={quillModules} />
                 </div>
-                <div style={{ height: '45px' }} />
+                <div style={{ height: '40px' }} />
               </div>
 
               <div className="form-group" style={{ gridColumn: '1/-1' }}>
                 <label className="form-label">Cara Testing Deployment</label>
                 <div style={{ background: 'var(--bg-card)', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--border-subtle)' }}>
-                  <ReactQuill theme="snow" value={form.testingInstructions} onChange={(val) => handleEditorChange('testingInstructions', val)} style={{ height: '130px' }} modules={quillModules} />
+                  <ReactQuill theme="snow" value={form.testingInstructions} onChange={(val) => handleEditorChange('testingInstructions', val)} style={{ height: '100px' }} modules={quillModules} />
                 </div>
-                <div style={{ height: '45px' }} />
+                <div style={{ height: '40px' }} />
               </div>
 
               {/* Environment Variables Section */}
