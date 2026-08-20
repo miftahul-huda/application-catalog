@@ -5,7 +5,7 @@ require('dotenv').config();
 const { sequelize } = require('./models');
 
 const app = express();
-const PORT = process.env.APP_PORT || 5050;
+const PORT = process.env.PORT || process.env.APP_PORT || 5050;
 
 // Middleware
 app.use(cors({
