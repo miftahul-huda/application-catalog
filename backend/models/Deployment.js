@@ -10,6 +10,10 @@ const Deployment = sequelize.define('Deployment', {
     type: DataTypes.STRING,
     allowNull: false
   },
+  title: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
   url: {
     type: DataTypes.STRING
   },

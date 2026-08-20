@@ -42,6 +42,7 @@ export default function DeploymentFormModal({ applicationId, onClose, onSuccess 
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
     applicationId,
+    title: '',
     url: '',
     platformId: '',
     instructions: '',
@@ -126,6 +127,11 @@ export default function DeploymentFormModal({ applicationId, onClose, onSuccess 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
           <div className="modal-body" style={{ overflowY: 'auto', flex: 1 }}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}>
+
+              <div className="form-group" style={{ gridColumn: '1/-1' }}>
+                <label className="form-label">Title / Nama Deployment</label>
+                <input type="text" name="title" className="form-input" placeholder="Contoh: Production, Staging, QA" value={form.title} onChange={handleChange} />
+              </div>
 
               <div className="form-group" style={{ gridColumn: '1/-1' }}>
                 <label className="form-label form-required">URL Deployment</label>

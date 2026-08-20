@@ -1237,7 +1237,10 @@ export default function AppDetailPage() {
                               </span>
                             )}
                           </div>
-                          <a href={d.url} target="_blank" rel="noreferrer" style={{ fontWeight: 600, color: 'var(--accent-primary)', fontSize: '1rem' }}>{d.url}</a>
+                          {d.title && (
+                            <div style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text-primary)', marginBottom: '4px' }}>{d.title}</div>
+                          )}
+                          <a href={d.url} target="_blank" rel="noreferrer" style={{ fontWeight: 600, color: 'var(--accent-primary)', fontSize: '0.9rem' }}>{d.url}</a>
                         </div>
                         <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
                           <button
