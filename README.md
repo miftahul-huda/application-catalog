@@ -51,9 +51,10 @@ Jalankan perintah berikut di dalam direktori `frontend`:
 # Ganti [BACKEND_URL] dengan URL backend yang didapat dari langkah sebelumnya
 gcloud run deploy appcat-web \
   --source . \
-  --set-env-vars VITE_API_URL=[BACKEND_URL]/api \
   --region asia-southeast2 \
-  --allow-unauthenticated
+  --allow-unauthenticated \
+  --set-env-vars VITE_API_URL=[BACKEND_URL]/api
+
 ```
 
 ---

@@ -6,8 +6,11 @@ import DashboardPage from './pages/DashboardPage';
 import AppGroupsPage from './pages/AppGroupsPage';
 import AppGroupDetailPage from './pages/AppGroupDetailPage';
 import AppDetailPage from './pages/AppDetailPage';
+import DeploymentRelationshipsPage from './pages/DeploymentRelationshipsPage';
 import ApplicationsPage from './pages/ApplicationsPage';
 import DocumentationsPage from './pages/DocumentationsPage';
+import KnowledgeBasePage from './pages/KnowledgeBasePage';
+import KnowledgeBaseDetailPage from './pages/KnowledgeBaseDetailPage';
 import SourceCodesPage from './pages/SourceCodesPage';
 import BacklogsPage from './pages/BacklogsPage';
 import ErrorReportsPage from './pages/ErrorReportsPage';
@@ -59,9 +62,12 @@ export default function App() {
           <Route path="applications" element={<InternalRoute><ApplicationsPage /></InternalRoute>} />
           <Route path="deployments" element={<InternalRoute><DeploymentsPage /></InternalRoute>} />
           <Route path="documentations" element={<InternalRoute><DocumentationsPage /></InternalRoute>} />
+          <Route path="knowledge-base" element={<InternalRoute><KnowledgeBasePage /></InternalRoute>} />
+          <Route path="knowledge-base/:id" element={<InternalRoute><KnowledgeBaseDetailPage /></InternalRoute>} />
           <Route path="source-codes" element={<InternalRoute><SourceCodesPage /></InternalRoute>} />
           <Route path="backlogs" element={<InternalRoute><BacklogsPage /></InternalRoute>} />
           <Route path="apps/:id" element={<InternalRoute><AppDetailPage /></InternalRoute>} />
+          <Route path="apps/:id/deployments/:deploymentId/relationships" element={<InternalRoute><DeploymentRelationshipsPage /></InternalRoute>} />
           <Route path="admin" element={<PrivateRoute adminOnly><AdminPage /></PrivateRoute>} />
           <Route path="master" element={<PrivateRoute adminOnly><MasterDataPage /></PrivateRoute>} />
         </Route>

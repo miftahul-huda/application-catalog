@@ -1,9 +1,9 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { useParams, Link, useSearchParams } from 'react-router-dom';
+import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   ArrowLeft, Plus, Edit, Copy, Trash2, GitBranch, Server, Clock, User, Tag,
   FileText, Users, Code, Globe, Download, Save, Eye, EyeOff, X, ChevronDown, ChevronUp,
-  Bug, Wrench, Image as ImageIcon, ExternalLink, ZoomIn
+  Bug, Wrench, Image as ImageIcon, ExternalLink, ZoomIn, Network
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../services/api';
@@ -66,6 +66,7 @@ const stripHtml = (html) => {
 
 export default function AppDetailPage() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [app, setApp] = useState(null);
   const [backlogs, setBacklogs] = useState([]);
@@ -98,6 +99,7 @@ export default function AppDetailPage() {
   const [activeDoc, setActiveDoc] = useState(null);
   const [showDocModal, setShowDocModal] = useState(false);
   const [editDoc, setEditDoc] = useState(null);
+
 
   const toggleShowEnvVars = (deplId) => {
     setShowEnvVars(prev => ({
@@ -154,7 +156,7 @@ export default function AppDetailPage() {
       setRoles(roleRes.data);
       setSourceCodes(scRes.data || []);
       setBugHistories(bugRes.data || []);
-      
+
       const docs = docRes.data || [];
       setDocumentations(docs);
       if (docs.length > 0) {
@@ -228,6 +230,18 @@ export default function AppDetailPage() {
         load();
       } catch {
         toast('Gagal menghapus dokumentasi', 'error');
+      }
+    }, 'danger');
+  };
+
+  const handleDeleteApp = () => {
+    confirm('Hapus Aplikasi', `Yakin ingin menghapus aplikasi "${app?.name || 'ini'}"? Semua data terkait akan ikut terhapus.`, async () => {
+      try {
+        await api.delete(`/apps/${id}`);
+        toast('Aplikasi berhasil dihapus', 'success');
+        navigate(app?.groupId ? `/app-groups/${app.groupId}` : '/applications');
+      } catch {
+        toast('Gagal menghapus aplikasi', 'error');
       }
     }, 'danger');
   };
@@ -436,6 +450,9 @@ export default function AppDetailPage() {
         <div style={{ display: 'flex', gap: '8px' }}>
           <button className="btn btn-secondary" onClick={() => setShowEditApp(true)}>
             <Edit size={16} /> Edit App
+          </button>
+          <button className="btn btn-danger" onClick={handleDeleteApp}>
+            <Trash2 size={16} /> Delete App
           </button>
           <button className="btn btn-primary" onClick={() => { setActiveTab('Documentation'); setIsEditingDoc(true); }}>
             <FileText size={16} /> Documentation
@@ -1263,6 +1280,14 @@ export default function AppDetailPage() {
                           >
                             .env vars
                           </button>
+                          <Link
+                            to={`/apps/${id}/deployments/${d.id}/relationships`}
+                            className="btn btn-secondary btn-sm"
+                            style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.8rem' }}
+                            title="Relationship with External System"
+                          >
+                            <Network size={13} /> Relationship with External System
+                          </Link>
                           <button className="btn btn-ghost btn-icon btn-sm" onClick={() => handleDeleteDeployment(d.id)}><Trash2 size={16} color="var(--accent-danger)" /></button>
                         </div>
                       </div>

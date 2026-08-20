@@ -1,4 +1,4 @@
-const { Application, ApplicationGroup, ApplicationCategory, ApplicationFunction, ApplicationDeveloper, DeveloperRole, ApplicationProject, User } = require('../models');
+const { Application, ApplicationGroup, ApplicationCategory, ApplicationFunction, ApplicationDeveloper, DeveloperRole, ApplicationProject, User, Backlog, Deployment, SourceCode, BugHistory, Documentation, ExternalUserApplication } = require('../models');
 
 const getApps = async (req, res) => {
   const { groupId, categoryId, functionId, search } = req.query;
@@ -208,6 +208,26 @@ const duplicateApp = async (req, res) => {
   }
 };
 
+const deleteApp = async (req, res) => {
+  try {
+    const app = await Application.findByPk(req.params.id);
+    if (!app) return res.status(404).json({ message: 'Application not found' });
+
+    await ApplicationDeveloper.destroy({ where: { applicationId: app.id } });
+    await Backlog.destroy({ where: { applicationId: app.id } });
+    await Deployment.destroy({ where: { applicationId: app.id } });
+    await SourceCode.destroy({ where: { applicationId: app.id } });
+    await BugHistory.destroy({ where: { applicationId: app.id } });
+    await Documentation.destroy({ where: { applicationId: app.id } });
+    await ExternalUserApplication.destroy({ where: { applicationId: app.id } });
+    await app.destroy();
+
+    res.json({ message: 'Application deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   getApps,
   getApp,
@@ -215,5 +235,6 @@ module.exports = {
   updateApp,
   duplicateApp,
   addDeveloper,
-  removeDeveloper
+  removeDeveloper,
+  deleteApp
 };

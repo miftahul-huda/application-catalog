@@ -1,4 +1,4 @@
-const { ApplicationGroup, Application, ApplicationProject, User } = require('../models');
+const { ApplicationGroup, Application, ApplicationProject, User, ApplicationDeveloper, Backlog, Deployment, SourceCode, BugHistory, Documentation, ExternalUserApplication } = require('../models');
 
 const getGroups = async (req, res) => {
   try {
@@ -73,10 +73,37 @@ const duplicateGroup = async (req, res) => {
   }
 };
 
+const deleteGroup = async (req, res) => {
+  try {
+    const group = await ApplicationGroup.findByPk(req.params.id, {
+      include: [{ model: Application, as: 'applications' }]
+    });
+    if (!group) return res.status(404).json({ message: 'Group not found' });
+
+    const appIds = group.applications.map(app => app.id);
+    if (appIds.length > 0) {
+      await ApplicationDeveloper.destroy({ where: { applicationId: appIds } });
+      await Backlog.destroy({ where: { applicationId: appIds } });
+      await Deployment.destroy({ where: { applicationId: appIds } });
+      await SourceCode.destroy({ where: { applicationId: appIds } });
+      await BugHistory.destroy({ where: { applicationId: appIds } });
+      await Documentation.destroy({ where: { applicationId: appIds } });
+      await ExternalUserApplication.destroy({ where: { applicationId: appIds } });
+      await Application.destroy({ where: { id: appIds } });
+    }
+
+    await group.destroy();
+    res.json({ message: 'Application group deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   getGroups,
   getGroup,
   createGroup,
   updateGroup,
-  duplicateGroup
+  duplicateGroup,
+  deleteGroup
 };

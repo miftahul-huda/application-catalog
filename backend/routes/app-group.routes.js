@@ -1,12 +1,13 @@
 const express = require('express');
 const router = express.Router();
 const { protect, internalOnly } = require('../middleware/auth');
-const { getGroups, getGroup, createGroup, updateGroup, duplicateGroup } = require('../controllers/app-group.controller');
+const { getGroups, getGroup, createGroup, updateGroup, duplicateGroup, deleteGroup } = require('../controllers/app-group.controller');
 
 router.get('/', protect, internalOnly, getGroups);
 router.get('/:id', protect, internalOnly, getGroup);
 router.post('/', protect, internalOnly, createGroup);
 router.put('/:id', protect, internalOnly, updateGroup);
+router.delete('/:id', protect, internalOnly, deleteGroup);
 router.post('/:id/duplicate', protect, internalOnly, duplicateGroup);
 
 // Add document to group

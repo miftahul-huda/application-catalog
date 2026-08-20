@@ -1,12 +1,27 @@
 import { useEffect, useState, useCallback } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { Plus, ArrowLeft, Copy, Search, ExternalLink, Clock, Tag, FileText, Link2, LayoutGrid, FileSearch, Edit2, Trash2 } from 'lucide-react';
+import { useParams, Link, useNavigate } from 'react-router-dom';
+import { Plus, ArrowLeft, Copy, Search, ExternalLink, Clock, Tag, FileText, Link2, LayoutGrid, FileSearch, BookOpen, Edit2, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../services/api';
 import { useUI } from '../contexts/UIContext';
 import AppFormModal from '../components/AppFormModal';
 import AppGroupFormModal from '../components/AppGroupFormModal';
 import DocumentFormModal from '../components/DocumentFormModal';
+import GroupDocumentationFormModal from '../components/GroupDocumentationFormModal';
+
+const DOC_TYPE_COLORS = {
+  'SRS': 'badge-primary',
+  'Architecture & Topology': 'badge-info',
+  'ERD': 'badge-info',
+  'Setup & Onboarding': 'badge-success',
+  'Code Standard & Convention': 'badge-neutral',
+  'Testing': 'badge-warning',
+  'CI/CD': 'badge-warning',
+  'Runbook & Incident Management': 'badge-danger',
+  'Disaster Recovery Plan': 'badge-danger',
+  'User Manual/FAQ': 'badge-success',
+  'Other': 'badge-neutral',
+};
 
 const CATEGORY_COLORS = {
   'Web Application': 'badge-info',
@@ -25,6 +40,7 @@ const FUNCTION_COLORS = {
 
 export default function AppGroupDetailPage() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [group, setGroup] = useState(null);
   const [apps, setApps] = useState([]);
   const [filtered, setFiltered] = useState([]);
@@ -40,23 +56,28 @@ export default function AppGroupDetailPage() {
   const [showDocModal, setShowDocModal] = useState(false);
   const [editApp, setEditApp] = useState(null);
   const [projects, setProjects] = useState([]);
+  const [groupDocs, setGroupDocs] = useState([]);
+  const [showGroupDocForm, setShowGroupDocForm] = useState(false);
+  const [editGroupDoc, setEditGroupDoc] = useState(null);
   const { confirm, toast } = useUI();
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [grpRes, appRes, catRes, fnRes, prjRes] = await Promise.all([
+      const [grpRes, appRes, catRes, fnRes, prjRes, docRes] = await Promise.all([
         api.get(`/app-groups/${id}`),
         api.get(`/apps?groupId=${id}`),
         api.get('/master/categories'),
         api.get('/master/functions'),
         api.get('/master/projects'),
+        api.get('/group-documentations', { params: { groupId: id } }),
       ]);
       setGroup(grpRes.data);
       setApps(appRes.data);
       setCategories(catRes.data);
       setFunctions(fnRes.data);
       setProjects(prjRes.data);
+      setGroupDocs(docRes.data || []);
     } catch { toast('Gagal memuat data', 'error'); }
     setLoading(false);
   }, [id]);
@@ -84,6 +105,18 @@ export default function AppGroupDetailPage() {
     }, 'primary');
   };
 
+  const handleDeleteGroup = () => {
+    confirm('Hapus Application Group', `Yakin ingin menghapus group "${group?.name || 'ini'}"? Semua aplikasi dan data turunannya akan ikut terhapus.`, async () => {
+      try {
+        await api.delete(`/app-groups/${id}`);
+        toast('Application group berhasil dihapus', 'success');
+        navigate('/app-groups');
+      } catch {
+        toast('Gagal menghapus application group', 'error');
+      }
+    }, 'danger');
+  };
+
   const handleDeleteDocument = (index, docTitle) => {
     confirm('Hapus Dokumen', `Yakin ingin menghapus dokumen "${docTitle || 'ini'}"?`, async () => {
       try {
@@ -92,6 +125,18 @@ export default function AppGroupDetailPage() {
         load();
       } catch {
         toast('Gagal menghapus dokumen', 'error');
+      }
+    }, 'danger');
+  };
+
+  const handleDeleteGroupDoc = (docId, docTitle) => {
+    confirm('Hapus Documentation', `Yakin ingin menghapus dokumen "${docTitle || 'ini'}"?`, async () => {
+      try {
+        await api.delete(`/group-documentations/${docId}`);
+        toast('Documentation berhasil dihapus', 'success');
+        load();
+      } catch {
+        toast('Gagal menghapus documentation', 'error');
       }
     }, 'danger');
   };
@@ -119,6 +164,7 @@ export default function AppGroupDetailPage() {
           </div>
           <div style={{ display: 'flex', gap: '8px' }}>
             <button className="btn btn-secondary" onClick={() => setShowGroupForm(true)}>Edit Group</button>
+            <button className="btn btn-danger" onClick={handleDeleteGroup}>Delete Group</button>
             <button className="btn btn-primary" onClick={() => { setEditApp(null); setShowForm(true); }}>
               <Plus size={16} /> Tambah Aplikasi
             </button>
@@ -130,6 +176,7 @@ export default function AppGroupDetailPage() {
       <div className="tabs" style={{ marginBottom: '1.5rem', background: 'var(--bg-card)', padding: '4px', borderRadius: '12px', border: '1px solid var(--border-subtle)' }}>
         {[
           { id: 'Applications', icon: LayoutGrid },
+          { id: 'Documentation', icon: BookOpen },
           { id: 'Documents', icon: FileSearch }
         ].map(tab => (
           <button 
@@ -300,6 +347,96 @@ export default function AppGroupDetailPage() {
             </>
           )}
 
+          {activeTab === 'Documentation' && (
+            <div>
+              <div className="section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+                <div>
+                  <h2 className="section-title" style={{ margin: 0 }}>Documentation</h2>
+                  <p style={{ margin: '4px 0 0', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                    SRS, arsitektur, ERD, runbook, dan dokumentasi teknis lain untuk group ini.
+                  </p>
+                </div>
+                <button
+                  className="btn btn-primary btn-sm"
+                  onClick={() => { setEditGroupDoc(null); setShowGroupDocForm(true); }}
+                >
+                  <Plus size={14} /> Tambah Documentation
+                </button>
+              </div>
+
+              {groupDocs.length === 0 ? (
+                <div className="card" style={{ textAlign: 'center', padding: '3rem' }}>
+                  <BookOpen size={48} color="var(--text-muted)" style={{ marginBottom: '1rem' }} />
+                  <div className="empty-state-title">Belum ada documentation</div>
+                  <div className="empty-state-desc" style={{ marginBottom: '1.5rem' }}>Belum ada dokumentasi yang ditambahkan untuk group ini.</div>
+                  <button className="btn btn-primary" onClick={() => { setEditGroupDoc(null); setShowGroupDocForm(true); }}>
+                    <Plus size={16} /> Tambah Documentation Pertama
+                  </button>
+                </div>
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(380px, 1fr))', gap: '1rem' }}>
+                  {groupDocs.map(doc => (
+                    <div key={doc.id} className="card shadow-hover" style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: '10px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', minWidth: 0 }}>
+                          <span className={`badge ${DOC_TYPE_COLORS[doc.type] || 'badge-neutral'}`} style={{ width: 'fit-content' }}>
+                            {doc.type}
+                          </span>
+                          <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {doc.title}
+                          </h4>
+                        </div>
+                        <div style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
+                          <button
+                            className="btn btn-ghost btn-icon btn-sm"
+                            title="Edit"
+                            onClick={() => { setEditGroupDoc(doc); setShowGroupDocForm(true); }}
+                          >
+                            <Edit2 size={14} />
+                          </button>
+                          <button
+                            className="btn btn-ghost btn-icon btn-sm"
+                            title="Hapus"
+                            onClick={() => handleDeleteGroupDoc(doc.id, doc.title)}
+                            style={{ color: 'var(--accent-danger)' }}
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </div>
+
+                      {doc.shortDescription ? (
+                        <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', lineHeight: 1.5, margin: 0, flex: 1 }}>
+                          {doc.shortDescription}
+                        </p>
+                      ) : (
+                        <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontStyle: 'italic', margin: 0, flex: 1 }}>
+                          Tidak ada deskripsi singkat.
+                        </p>
+                      )}
+
+                      <div style={{
+                        marginTop: 'auto',
+                        paddingTop: '10px',
+                        borderTop: '1px solid var(--border-subtle)',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        fontSize: '0.75rem',
+                        color: 'var(--text-muted)'
+                      }}>
+                        <span>{doc.creator?.name || '—'}</span>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <Clock size={12} /> {new Date(doc.updatedAt || doc.createdAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           {activeTab === 'Documents' && (
             <div>
               <div className="section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
@@ -407,6 +544,15 @@ export default function AppGroupDetailPage() {
           projects={projects}
           onClose={() => setShowGroupForm(false)}
           onSuccess={() => { setShowGroupForm(false); load(); }}
+        />
+      )}
+
+      {showGroupDocForm && (
+        <GroupDocumentationFormModal
+          groupId={id}
+          doc={editGroupDoc}
+          onClose={() => { setShowGroupDocForm(false); setEditGroupDoc(null); }}
+          onSuccess={() => { setShowGroupDocForm(false); setEditGroupDoc(null); load(); }}
         />
       )}
 

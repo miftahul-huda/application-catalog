@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Search, Copy, Clock, Users, Folder, ArrowRight, Edit2 } from 'lucide-react';
+import { Plus, Search, Copy, Clock, Users, Folder, ArrowRight, Edit2, Trash2 } from 'lucide-react';
 import api from '../services/api';
 import { useUI } from '../contexts/UIContext';
 import AppGroupFormModal from '../components/AppGroupFormModal';
@@ -22,7 +22,7 @@ function getGradient(id) {
   return GROUP_GRADIENTS[idx];
 }
 
-function GroupCard({ g, onDuplicate, onEdit }) {
+function GroupCard({ g, onDuplicate, onEdit, onDelete }) {
   const gradient = getGradient(g.id);
   const initial = g.name?.[0]?.toUpperCase() || 'G';
 
@@ -88,6 +88,14 @@ function GroupCard({ g, onDuplicate, onEdit }) {
               style={{ opacity: 0.7 }}
             >
               <Edit2 size={14} />
+            </button>
+            <button
+              className="icon-btn"
+              title="Delete"
+              onClick={e => { e.preventDefault(); onDelete(g.id); }}
+              style={{ opacity: 0.7, color: 'var(--accent-danger)' }}
+            >
+              <Trash2 size={14} />
             </button>
           </div>
         </div>
@@ -214,6 +222,17 @@ export default function AppGroupsPage() {
     }, 'primary');
   };
 
+  const handleDelete = async (id) => {
+    const group = groups.find(g => g.id === id);
+    confirm('Hapus Application Group', `Yakin ingin menghapus group "${group?.name || 'ini'}"? Semua aplikasi dan data turunannya akan ikut terhapus.`, async () => {
+      try {
+        await api.delete(`/app-groups/${id}`);
+        toast('Application group berhasil dihapus', 'success');
+        load();
+      } catch { toast('Gagal menghapus application group', 'error'); }
+    }, 'danger');
+  };
+
   const handleFormSuccess = () => {
     setShowForm(false);
     setEditGroup(null);
@@ -298,6 +317,7 @@ export default function AppGroupsPage() {
                 g={g}
                 onDuplicate={handleDuplicate}
                 onEdit={g => { setEditGroup(g); setShowForm(true); }}
+                onDelete={handleDelete}
               />
             </div>
           ))}

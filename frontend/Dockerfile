@@ -7,14 +7,10 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install
 
-# Copy source
+# Copy source (includes .env.production with VITE_API_URL)
 COPY . .
 
-# Accept VITE_API_URL as build argument
-ARG VITE_API_URL
-ENV VITE_API_URL=$VITE_API_URL
-
-# Build the app
+# Build the app (Vite reads .env.production automatically)
 RUN npm run build
 
 # Stage 2: Serve with Nginx on dynamic port (for Cloud Run)
@@ -23,17 +19,10 @@ FROM nginx:stable-alpine
 # Copy build output
 COPY --from=build /app/dist /usr/share/nginx/html
 
-# Custom nginx config that uses $PORT env var from Cloud Run
-RUN echo 'server { \
-  listen $PORT; \
-  root /usr/share/nginx/html; \
-  index index.html; \
-  location / { \
-    try_files $uri $uri/ /index.html; \
-  } \
-}' > /etc/nginx/templates/default.conf.template
+# Create templates directory and nginx config that uses $PORT
+RUN mkdir -p /etc/nginx/templates && \
+    printf 'server {\n  listen ${PORT};\n  root /usr/share/nginx/html;\n  index index.html;\n  location / {\n    try_files $uri $uri/ /index.html;\n  }\n}\n' > /etc/nginx/templates/default.conf.template
 
-# Use envsubst to inject $PORT at container start (provided by nginx-envsubst in official image)
 ENV PORT=8080
 EXPOSE 8080
 

@@ -2,7 +2,7 @@ import { Outlet, NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import {
   LayoutDashboard, Layers, LayoutGrid, BookOpen, GitBranch, Clock, Users, Database,
-  LogOut, ChevronRight, Palette, Check, X, Bug, Server
+  LogOut, ChevronRight, Palette, Check, X, Bug, Server, Library
 } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { useUI } from '../contexts/UIContext';
@@ -17,8 +17,13 @@ const navItems = [
   { to: '/documentations', icon: BookOpen, label: 'Documentations' },
   { to: '/source-codes', icon: GitBranch, label: 'Source Codes' },
   { to: '/backlogs', icon: Clock, label: 'Backlogs' },
-  { to: '/error-reports', icon: Bug, label: 'Error Reports' },
+  { to: '/error-reports', icon: Bug, label: 'Error Reports' }
 ];
+
+const generalNavItems = [
+  { to: '/knowledge-base', icon: Library, label: 'Knowledge Base' }
+];
+
 const adminItems = [
   { to: '/admin', icon: Users, label: 'User Management' },
   { to: '/master', icon: Database, label: 'Master Data' },
@@ -135,7 +140,7 @@ export default function Layout() {
 
         {/* Nav */}
         <nav className="sidebar-nav">
-          <div className="sidebar-section-label">Menu</div>
+          <div className="sidebar-section-label">Application Manager</div>
           {visibleNavItems.map(item => (
             <NavLink
               key={item.to}
@@ -148,6 +153,25 @@ export default function Layout() {
               {item.label}
             </NavLink>
           ))}
+
+
+          {user?.role !== 'External' && (
+            <>
+              <div className="sidebar-section-label">General</div>
+              {generalNavItems.map(item => (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  end={item.exact}
+                  className={({ isActive }) => `sidebar-item ${isActive ? 'active' : ''}`}
+                  onClick={() => setSidebarOpen(false)}
+                >
+                  <item.icon size={17} />
+                  {item.label}
+                </NavLink>
+              ))}
+            </>
+          )}
 
           {user?.role === 'Admin' && (
             <>

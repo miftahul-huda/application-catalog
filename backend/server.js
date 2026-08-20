@@ -36,6 +36,9 @@ app.use('/api/assets', require('./routes/asset.routes'));
 app.use('/api/source-codes', require('./routes/source-code.routes'));
 app.use('/api/bug-histories', require('./routes/bug-history.routes'));
 app.use('/api/documentations', require('./routes/documentation.routes'));
+app.use('/api/knowledge-base', require('./routes/knowledge-base.routes'));
+app.use('/api/relationships', require('./routes/relationship.routes'));
+app.use('/api/group-documentations', require('./routes/group-documentation.routes'));
 
 
 
