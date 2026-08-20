@@ -1415,6 +1415,7 @@ export default function AppDetailPage() {
       {showDeployForm && (
         <DeploymentFormModal
           applicationId={id}
+          appName={app?.name}
           onClose={() => setShowDeployForm(false)}
           onSuccess={() => { setShowDeployForm(false); load(); }}
         />

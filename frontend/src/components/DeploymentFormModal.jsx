@@ -37,12 +37,12 @@ function serializeDotEnv(vars) {
     .join('\n');
 }
 
-export default function DeploymentFormModal({ applicationId, onClose, onSuccess }) {
+export default function DeploymentFormModal({ applicationId, appName, onClose, onSuccess }) {
   const { toast } = useUI();
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
     applicationId,
-    title: '',
+    title: appName || '',
     url: '',
     platformId: '',
     environmentId: '',
@@ -58,6 +58,12 @@ export default function DeploymentFormModal({ applicationId, onClose, onSuccess 
     api.get('/master/environments').then(res => setEnvironments(res.data)).catch(() => {});
   }, []);
 
+  useEffect(() => {
+    if (appName && !form.title) {
+      setForm(f => ({ ...f, title: appName }));
+    }
+  }, [appName]);
+
   // Env Vars state
   const [envVars, setEnvVars] = useState([{ key: '', value: '' }]);
   const [showValues, setShowValues] = useState(false);
@@ -67,6 +73,19 @@ export default function DeploymentFormModal({ applicationId, onClose, onSuccess 
 
   const handleChange = (e) => setForm(f => ({ ...f, [e.target.name]: e.target.value }));
   const handleEditorChange = (name, value) => setForm(f => ({ ...f, [name]: value }));
+
+  const handleEnvironmentChange = (e) => {
+    const envId = e.target.value;
+    const selectedEnv = environments.find(env => String(env.id) === String(envId));
+    const envName = selectedEnv ? selectedEnv.name : '';
+    const newTitle = envName ? `${appName || ''} - ${envName}` : appName || '';
+    
+    setForm(f => ({
+      ...f,
+      environmentId: envId,
+      title: newTitle
+    }));
+  };
 
   // Env var row handlers
   const addEnvRow = () => setEnvVars(prev => [...prev, { key: '', value: '' }]);
@@ -132,6 +151,14 @@ export default function DeploymentFormModal({ applicationId, onClose, onSuccess 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}>
 
               <div className="form-group" style={{ gridColumn: '1/-1' }}>
+                <label className="form-label">Environment</label>
+                <select name="environmentId" className="form-select" value={form.environmentId} onChange={handleEnvironmentChange}>
+                  <option value="">— Pilih Environment —</option>
+                  {environments.map(e => <option key={e.id} value={e.id}>{e.name}</option>)}
+                </select>
+              </div>
+
+              <div className="form-group" style={{ gridColumn: '1/-1' }}>
                 <label className="form-label">Title / Nama Deployment</label>
                 <input type="text" name="title" className="form-input" placeholder="Contoh: Production, Staging, QA" value={form.title} onChange={handleChange} />
               </div>
@@ -146,14 +173,6 @@ export default function DeploymentFormModal({ applicationId, onClose, onSuccess 
                 <select name="platformId" className="form-select" value={form.platformId} onChange={handleChange}>
                   <option value="">— Pilih Platform —</option>
                   {platforms.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                </select>
-              </div>
-
-              <div className="form-group" style={{ gridColumn: '1/-1' }}>
-                <label className="form-label">Environment</label>
-                <select name="environmentId" className="form-select" value={form.environmentId} onChange={handleChange}>
-                  <option value="">— Pilih Environment —</option>
-                  {environments.map(e => <option key={e.id} value={e.id}>{e.name}</option>)}
                 </select>
               </div>
 
