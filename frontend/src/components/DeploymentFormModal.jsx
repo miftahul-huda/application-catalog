@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Plus, Trash2, Upload, Download, Eye, EyeOff, Copy, Check } from 'lucide-react';
 import api from '../services/api';
@@ -6,7 +6,7 @@ import { useUI } from '../contexts/UIContext';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
 
-const PLATFORMS = ['VM', 'Managed VM Group', 'Kubernetes', 'Docker Swarm', 'Cloud Run', 'App Engine', 'Other'];
+
 
 function parseDotEnv(text) {
   const lines = text.split('\n');
@@ -43,10 +43,16 @@ export default function DeploymentFormModal({ applicationId, onClose, onSuccess 
   const [form, setForm] = useState({
     applicationId,
     url: '',
-    platform: '',
+    platformId: '',
     instructions: '',
     testingInstructions: '',
   });
+
+  const [platforms, setPlatforms] = useState([]);
+
+  useEffect(() => {
+    api.get('/master/platforms').then(res => setPlatforms(res.data)).catch(() => {});
+  }, []);
 
   // Env Vars state
   const [envVars, setEnvVars] = useState([{ key: '', value: '' }]);
@@ -128,9 +134,9 @@ export default function DeploymentFormModal({ applicationId, onClose, onSuccess 
 
               <div className="form-group" style={{ gridColumn: '1/-1' }}>
                 <label className="form-label">Platform</label>
-                <select name="platform" className="form-select" value={form.platform} onChange={handleChange}>
+                <select name="platformId" className="form-select" value={form.platformId} onChange={handleChange}>
                   <option value="">— Pilih Platform —</option>
-                  {PLATFORMS.map(p => <option key={p} value={p}>{p}</option>)}
+                  {platforms.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                 </select>
               </div>
 

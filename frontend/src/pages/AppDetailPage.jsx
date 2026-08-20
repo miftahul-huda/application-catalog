@@ -1223,7 +1223,9 @@ export default function AppDetailPage() {
                         <div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', flexWrap: 'wrap' }}>
                             <span className="badge badge-neutral" style={{ fontFamily: 'var(--font-mono)' }}>{d.id}</span>
-                            <span className="badge badge-info">{d.platform}</span>
+                            {(d.platformData?.name || d.platform) && (
+                              <span className="badge badge-info">{d.platformData?.name || d.platform}</span>
+                            )}
                             {Array.isArray(d.envVars) && d.envVars.length > 0 && (
                               <span
                                 className="badge badge-success"

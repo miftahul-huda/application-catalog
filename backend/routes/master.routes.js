@@ -6,7 +6,8 @@ const {
   ApplicationCategory,
   ApplicationFunction,
   DeveloperRole,
-  BacklogStatus
+  BacklogStatus,
+  DeploymentPlatform
 } = require('../models');
 
 // Generic CRUD factory
@@ -71,5 +72,12 @@ router.get('/statuses', protect, approvedOnly, status.list);
 router.post('/statuses', protect, adminOnly, status.create);
 router.put('/statuses/:id', protect, adminOnly, status.update);
 router.delete('/statuses/:id', protect, adminOnly, status.remove);
+
+// Deployment Platforms
+const platform = crudFor(DeploymentPlatform);
+router.get('/platforms', protect, approvedOnly, platform.list);
+router.post('/platforms', protect, adminOnly, platform.create);
+router.put('/platforms/:id', protect, adminOnly, platform.update);
+router.delete('/platforms/:id', protect, adminOnly, platform.remove);
 
 module.exports = router;

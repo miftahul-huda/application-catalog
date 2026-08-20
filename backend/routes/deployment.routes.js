@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { protect, internalOnly } = require('../middleware/auth');
-const { Deployment } = require('../models');
+const { Deployment, DeploymentPlatform } = require('../models');
 
 const genDeploymentId = async (applicationId) => {
   const { Op } = require('sequelize');
@@ -21,6 +21,7 @@ router.get('/', protect, internalOnly, async (req, res) => {
   try {
     const deployments = await Deployment.findAll({
       where: appId ? { applicationId: appId } : {},
+      include: [{ model: DeploymentPlatform, as: 'platformData' }],
       order: [['createdAt', 'DESC']]
     });
     res.json(deployments);
@@ -44,7 +45,10 @@ router.put('/:id', protect, internalOnly, async (req, res) => {
     const deployment = await Deployment.findByPk(req.params.id);
     if (!deployment) return res.status(404).json({ message: 'Deployment not found' });
     await deployment.update(req.body);
-    res.json(deployment);
+    const updated = await Deployment.findByPk(req.params.id, {
+      include: [{ model: DeploymentPlatform, as: 'platformData' }]
+    });
+    res.json(updated);
   } catch (error) {
     res.status(400).json({ message: error.message });
   }

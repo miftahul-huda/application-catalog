@@ -19,8 +19,9 @@ const Deployment = sequelize.define('Deployment', {
   testingInstructions: {
     type: DataTypes.TEXT
   },
-  platform: {
-    type: DataTypes.ENUM('VM', 'Managed VM Group', 'Kubernetes', 'Docker Swarm', 'Cloud Run', 'App Engine')
+  platformId: {
+    type: DataTypes.INTEGER,
+    allowNull: true
   },
   envVars: {
     type: DataTypes.JSONB,

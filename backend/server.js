@@ -45,7 +45,7 @@ app.use((err, req, res, next) => {
 });
 
 const seedMasterData = async () => {
-  const { ApplicationProject, ApplicationCategory, ApplicationFunction, DeveloperRole, BacklogStatus } = require('./models');
+  const { ApplicationProject, ApplicationCategory, ApplicationFunction, DeveloperRole, BacklogStatus, DeploymentPlatform } = require('./models');
   const projectCount = await ApplicationProject.count();
   if (projectCount === 0) {
     await ApplicationProject.bulkCreate([
@@ -76,6 +76,13 @@ const seedMasterData = async () => {
   if (statusCount === 0) {
     await BacklogStatus.bulkCreate([
       { name: 'Requested' }, { name: 'In Progress' }, { name: 'Canceled' }, { name: 'Done' }
+    ]);
+  }
+  const platformCount = await DeploymentPlatform.count();
+  if (platformCount === 0) {
+    await DeploymentPlatform.bulkCreate([
+      { name: 'VM' }, { name: 'Managed VM Group' }, { name: 'Kubernetes' },
+      { name: 'Docker Swarm' }, { name: 'Cloud Run' }, { name: 'App Engine' }
     ]);
   }
 };
